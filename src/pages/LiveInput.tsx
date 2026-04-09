@@ -36,6 +36,14 @@ const emptyStats = (): Omit<PlayerStat, "player_id" | "name" | "jersey_number"> 
   blk: 0, stl: 0, to_count: 0, fouls: 0, pts_override: null,
 });
 
+const sortByJersey = <T extends { jersey_number: number | null }>(arr: T[]): T[] =>
+  [...arr].sort((a, b) => {
+    if (a.jersey_number === null && b.jersey_number === null) return 0;
+    if (a.jersey_number === null) return 1;
+    if (b.jersey_number === null) return -1;
+    return a.jersey_number - b.jersey_number;
+  });
+
 export default function LiveInput() {
   const { gameId } = useParams();
   const navigate = useNavigate();
@@ -48,24 +56,42 @@ export default function LiveInput() {
   const [saving, setSaving] = useState(false);
   const [existingGameId, setExistingGameId] = useState<string | null>(gameId || null);
 
-  const [gameStarted, setGameStarted] = useState(!!gameId);
+  const [gameStarted, setGameStarted] = useState(false);
   const [selectedFive, setSelectedFive] = useState<string[]>([]);
   const [onCourt, setOnCourt] = useState<string[]>([]);
   const [subOutPlayer, setSubOutPlayer] = useState<PlayerStat | null>(null);
+  const [captainId, setCaptainId] = useState<string | null>(null);
+  const [startingFiveIds, setStartingFiveIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isCoach) { navigate("/statistiken"); return; }
     const load = async () => {
-      const { data: players } = await supabase
-        .from("profiles").select("id, name, jersey_number")
-        .eq("role", "spieler").eq("is_active", true).order("name");
+      // If gameId, load roster from game_rosters
+      let rosterPlayerIds: string[] | null = null;
+      if (gameId) {
+        const { data: roster } = await supabase
+          .from("game_rosters").select("player_id").eq("game_id", gameId);
+        if (roster && roster.length > 0) {
+          rosterPlayerIds = roster.map(r => r.player_id);
+        }
+      }
+
+      let query = supabase.from("profiles").select("id, name, jersey_number")
+        .eq("role", "spieler").eq("is_active", true);
+      
+      if (rosterPlayerIds) {
+        query = query.in("id", rosterPlayerIds);
+      }
+
+      const { data: players } = await query;
 
       if (gameId) {
         const { data: game } = await supabase.from("games").select("*").eq("id", gameId).single();
         if (game) { setDate(game.date); setOpponent(game.opponent); setScoreHome(game.score_home); setScoreAway(game.score_away); }
+        
         const { data: existingStats } = await supabase.from("player_stats").select("*").eq("game_id", gameId);
-        if (players && existingStats) {
-          const mapped = players.map((p) => {
+        if (players && existingStats && existingStats.length > 0) {
+          const mapped = sortByJersey(players.map((p) => {
             const ex = existingStats.find((s) => s.player_id === p.id);
             return {
               player_id: p.id, name: p.name, jersey_number: p.jersey_number,
@@ -77,16 +103,22 @@ export default function LiveInput() {
                 to_count: ex.to_count, fouls: ex.fouls, pts_override: ex.pts_override,
               } : emptyStats()),
             };
-          });
+          }));
           setStats(mapped);
           const withStats = existingStats.map((s) => s.player_id);
           setOnCourt(withStats.slice(0, 5));
+          setStartingFiveIds(withStats.slice(0, 5));
           setGameStarted(true);
+        } else if (players) {
+          // Scheduled game, no stats yet — show starting five selector
+          setStats(sortByJersey(players.map((p) => ({
+            player_id: p.id, name: p.name, jersey_number: p.jersey_number, ...emptyStats(),
+          }))));
         }
       } else if (players) {
-        setStats(players.map((p) => ({
+        setStats(sortByJersey(players.map((p) => ({
           player_id: p.id, name: p.name, jersey_number: p.jersey_number, ...emptyStats(),
-        })));
+        }))));
       }
     };
     load();
@@ -102,6 +134,7 @@ export default function LiveInput() {
 
   const confirmStartingFive = useCallback(() => {
     setOnCourt(selectedFive);
+    setStartingFiveIds(selectedFive);
     setGameStarted(true);
   }, [selectedFive]);
 
@@ -140,10 +173,14 @@ export default function LiveInput() {
     try {
       let gId = existingGameId;
       if (gId) {
-        await supabase.from("games").update({ date, opponent, score_home: scoreHome, score_away: scoreAway }).eq("id", gId);
+        await supabase.from("games").update({
+          date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
+        }).eq("id", gId);
         await supabase.from("player_stats").delete().eq("game_id", gId);
       } else {
-        const { data: game, error } = await supabase.from("games").insert({ date, opponent, score_home: scoreHome, score_away: scoreAway }).select().single();
+        const { data: game, error } = await supabase.from("games").insert({
+          date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
+        }).select().single();
         if (error || !game) throw error || new Error("Game creation failed");
         gId = game.id;
         setExistingGameId(gId);
@@ -202,6 +239,8 @@ export default function LiveInput() {
               selected={selectedFive}
               onToggle={toggleFiveSelection}
               onConfirm={confirmStartingFive}
+              captainId={captainId}
+              onSetCaptain={(id) => setCaptainId(id || null)}
             />
           </CardContent>
         </Card>
@@ -247,6 +286,8 @@ export default function LiveInput() {
                 )
               )
             }
+            isCaptain={captainId === player.player_id}
+            isStarter={startingFiveIds.includes(player.player_id)}
           />
         ))}
       </div>
