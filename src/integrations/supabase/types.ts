@@ -41,6 +41,38 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          meal_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meal_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meal_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_ratings_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meals: {
         Row: {
           caption: string | null
