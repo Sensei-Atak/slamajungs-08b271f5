@@ -235,6 +235,10 @@ export default function Feed() {
         <PhotoUploadForm onPosted={() => { setActiveForm(null); fetchData(); }} onCancel={() => setActiveForm(null)} />
       )}
 
+      {todayGames.map((game, i) => (
+        <GameDayBanner key={i} {...game} />
+      ))}
+
       <DailyWinner winner={dailyWinner} />
 
       {timeline.length === 0 ? (
