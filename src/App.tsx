@@ -15,14 +15,16 @@ import GameSummary from "@/pages/GameSummary";
 import PlayerStats from "@/pages/PlayerStats";
 import Verwaltung from "@/pages/Verwaltung";
 import Profil from "@/pages/Profil";
+import ChangePassword from "@/pages/ChangePassword";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Laden...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (profile?.must_change_password) return <Navigate to="/change-password" replace />;
   return <>{children}</>;
 }
 
@@ -43,6 +45,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/feed" replace />} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/feed" element={<Feed />} />
