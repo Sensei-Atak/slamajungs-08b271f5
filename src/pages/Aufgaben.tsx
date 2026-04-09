@@ -88,8 +88,7 @@ export default function Aufgaben() {
     const path = `${folder}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("task-media").upload(path, file);
     if (error) throw error;
-    const { data } = supabase.storage.from("task-media").getPublicUrl(path);
-    return data.publicUrl;
+    return path;
   };
 
   const createTask = async (e: React.FormEvent) => {

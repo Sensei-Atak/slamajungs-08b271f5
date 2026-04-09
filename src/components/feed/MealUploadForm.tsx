@@ -68,13 +68,9 @@ export default function MealUploadForm({ onPosted, onCancel }: MealUploadFormPro
         .upload(path, croppedBlob, { contentType: "image/jpeg" });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("meal-photos")
-        .getPublicUrl(path);
-
       const { error } = await supabase.from("meals").insert({
         user_id: user.id,
-        image_url: urlData.publicUrl,
+        image_url: path,
         caption: caption || null,
       });
       if (error) throw error;

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSignedUrl } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,11 +32,10 @@ export default function Profil() {
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      const url = `${data.publicUrl}?t=${Date.now()}`;
-      setAvatarUrl(url);
+      const storedPath = `${path}?t=${Date.now()}`;
+      setAvatarUrl(storedPath);
 
-      await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      await supabase.from("profiles").update({ avatar_url: storedPath }).eq("id", user.id);
       toast.success("Profilbild aktualisiert");
     } catch (err: any) {
       toast.error(err.message);
