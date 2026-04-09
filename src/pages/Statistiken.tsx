@@ -7,8 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Plus } from "lucide-react";
+import { BarChart3, Play, Calendar, MapPin, Clock } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface PlayerAvg {
   id: string;
@@ -25,19 +26,39 @@ interface PlayerAvg {
   threePct: number;
 }
 
+interface Game {
+  id: string;
+  date: string;
+  opponent: string;
+  score_home: number;
+  score_away: number;
+  status: string;
+  game_time: string | null;
+  location: string | null;
+  is_home_game: boolean;
+}
+
 export default function Statistiken() {
   const { isCoach } = useAuth();
   const navigate = useNavigate();
   const [averages, setAverages] = useState<PlayerAvg[]>([]);
   const [sortKey, setSortKey] = useState<keyof PlayerAvg>("ppg");
   const [loading, setLoading] = useState(true);
+  const [scheduledGames, setScheduledGames] = useState<Game[]>([]);
+  const [completedGames, setCompletedGames] = useState<Game[]>([]);
 
   useEffect(() => {
     const load = async () => {
-      const [statsRes, profilesRes] = await Promise.all([
+      const [statsRes, profilesRes, gamesRes] = await Promise.all([
         supabase.from("player_stats").select("*"),
         supabase.from("profiles").select("id, name").eq("role", "spieler").eq("is_active", true),
+        supabase.from("games").select("*").order("date", { ascending: false }),
       ]);
+
+      if (gamesRes.data) {
+        setScheduledGames(gamesRes.data.filter((g) => g.status === "scheduled"));
+        setCompletedGames(gamesRes.data.filter((g) => g.status === "completed"));
+      }
 
       if (statsRes.data && profilesRes.data) {
         const players = profilesRes.data;
@@ -104,8 +125,18 @@ export default function Statistiken() {
     return <div className="flex justify-center py-12 text-muted-foreground">Laden...</div>;
   }
 
+  const formatDate = (d: string) => {
+    try { return format(parseISO(d), "dd. MMM yyyy", { locale: de }); }
+    catch { return d; }
+  };
+
+  const formatTime = (t: string | null) => {
+    if (!t) return null;
+    return t.slice(0, 5);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Statistiken</h1>
         {isCoach && (
@@ -113,57 +144,131 @@ export default function Statistiken() {
             onClick={() => navigate("/statistiken/live")}
             className="min-h-[44px] gap-2"
           >
-            <Plus className="h-4 w-4" />
+            <Play className="h-4 w-4" />
             Neues Spiel
           </Button>
         )}
       </div>
 
-      {averages.length === 0 || averages.every((a) => a.games === 0) ? (
+      {/* Scheduled Games - Coach only */}
+      {isCoach && scheduledGames.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">Angesetzte Spiele</h2>
+          <div className="grid gap-2">
+            {scheduledGames.map((g) => (
+              <Card key={g.id} className="cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => navigate(`/statistiken/live/${g.id}`)}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="font-semibold">
+                      {g.is_home_game ? "vs." : "@"} {g.opponent}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(g.date)}
+                      </span>
+                      {g.game_time && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatTime(g.game_time)}
+                        </span>
+                      )}
+                      {g.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {g.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button size="sm" className="gap-1.5 shrink-0">
+                    <Play className="h-3.5 w-3.5" />
+                    Live-Statistik
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed Games - visible to all */}
+      {completedGames.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">Vergangene Spiele</h2>
+          <div className="grid gap-2">
+            {completedGames.map((g) => (
+              <Card key={g.id} className="cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => navigate(`/statistiken/spiel/${g.id}`)}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="font-semibold">
+                      {g.is_home_game ? "vs." : "@"} {g.opponent}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <span>{formatDate(g.date)}</span>
+                    </div>
+                  </div>
+                  <div className="text-lg font-bold tabular-nums">
+                    {g.score_home} : {g.score_away}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Player Averages */}
+      {averages.length > 0 && averages.some((a) => a.games > 0) ? (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">Spieler-Durchschnitte</h2>
+          <Card>
+            <CardContent className="pt-4 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="text-center">Spiele</TableHead>
+                    {cols.map((c) => (
+                      <TableHead
+                        key={c.key}
+                        className="text-center cursor-pointer hover:text-primary"
+                        onClick={() => setSortKey(c.key)}
+                      >
+                        {c.label}
+                        {sortKey === c.key && " ↓"}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sorted.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => navigate(`/statistiken/spieler/${p.id}`)}
+                    >
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="text-center tabular-nums">{p.games}</TableCell>
+                      {cols.map((c) => (
+                        <TableCell key={c.key} className="text-center tabular-nums">
+                          {c.key.includes("Pct") ? `${p[c.key]}%` : p[c.key]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
         <Card>
           <CardContent className="flex flex-col items-center py-12">
             <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">Noch keine Spieldaten vorhanden.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="pt-4 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="text-center">Spiele</TableHead>
-                  {cols.map((c) => (
-                    <TableHead
-                      key={c.key}
-                      className="text-center cursor-pointer hover:text-primary"
-                      onClick={() => setSortKey(c.key)}
-                    >
-                      {c.label}
-                      {sortKey === c.key && " ↓"}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sorted.map((p) => (
-                  <TableRow
-                    key={p.id}
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => navigate(`/statistiken/spieler/${p.id}`)}
-                  >
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-center tabular-nums">{p.games}</TableCell>
-                    {cols.map((c) => (
-                      <TableCell key={c.key} className="text-center tabular-nums">
-                        {c.key.includes("Pct") ? `${p[c.key]}%` : p[c.key]}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           </CardContent>
         </Card>
       )}
