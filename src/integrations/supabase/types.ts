@@ -14,16 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      games: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          opponent: string
+          score_away: number
+          score_home: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          opponent: string
+          score_away?: number
+          score_home?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          opponent?: string
+          score_away?: number
+          score_home?: number
+        }
+        Relationships: []
+      }
+      meals: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      player_stats: {
+        Row: {
+          ast: number
+          blk: number
+          fouls: number
+          fw_attempted: number
+          fw_made: number
+          game_id: string
+          id: string
+          player_id: string
+          pts_override: number | null
+          reb: number
+          stl: number
+          threep_attempted: number
+          threep_made: number
+          to_count: number
+          twop_attempted: number
+          twop_made: number
+        }
+        Insert: {
+          ast?: number
+          blk?: number
+          fouls?: number
+          fw_attempted?: number
+          fw_made?: number
+          game_id: string
+          id?: string
+          player_id: string
+          pts_override?: number | null
+          reb?: number
+          stl?: number
+          threep_attempted?: number
+          threep_made?: number
+          to_count?: number
+          twop_attempted?: number
+          twop_made?: number
+        }
+        Update: {
+          ast?: number
+          blk?: number
+          fouls?: number
+          fw_attempted?: number
+          fw_made?: number
+          game_id?: string
+          id?: string
+          player_id?: string
+          pts_override?: number | null
+          reb?: number
+          stl?: number
+          threep_attempted?: number
+          threep_made?: number
+          to_count?: number
+          twop_attempted?: number
+          twop_made?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_stats_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          jersey_number: number | null
+          name: string
+          position: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          is_active?: boolean
+          jersey_number?: number | null
+          name: string
+          position?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jersey_number?: number | null
+          name?: string
+          position?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_submissions: {
+        Row: {
+          id: string
+          player_id: string
+          submitted_at: string
+          task_id: string
+          video_url: string
+        }
+        Insert: {
+          id?: string
+          player_id: string
+          submitted_at?: string
+          task_id: string
+          video_url: string
+        }
+        Update: {
+          id?: string
+          player_id?: string
+          submitted_at?: string
+          task_id?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_submissions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_closed: boolean
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_closed?: boolean
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_closed?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_coach: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "coach" | "spieler"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +364,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["coach", "spieler"],
+    },
   },
 } as const
