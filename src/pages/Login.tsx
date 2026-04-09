@@ -61,19 +61,48 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           {resetMode ? (
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Dein Coach kann dir ein neues temporäres Passwort erstellen. Bitte wende dich direkt an ihn.
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => setResetMode(false)}
-              >
-                Zurück zur Anmeldung
-              </Button>
-            </div>
+            resetSent ? (
+              <div className="space-y-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Anfrage gesendet! Dein Coach wurde benachrichtigt und wird dir ein neues temporäres Passwort geben.
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => { setResetMode(false); setResetSent(false); }}
+                >
+                  Zurück zur Anmeldung
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleReset} className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Gib deine E-Mail-Adresse ein. Dein Coach erhält eine Anfrage und kann dir ein neues Passwort erstellen.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">E-Mail</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
+                  {loading ? "Wird gesendet..." : "Anfrage senden"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setResetMode(false)}
+                >
+                  Zurück zur Anmeldung
+                </Button>
+              </form>
+            )
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
