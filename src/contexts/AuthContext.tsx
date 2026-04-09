@@ -58,11 +58,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
+        const remember = localStorage.getItem("rememberMe");
+        if (remember === "false") {
+          await supabase.auth.signOut();
+          localStorage.removeItem("rememberMe");
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        setSession(session);
+        setUser(session.user);
         fetchProfile(session.user.id);
+      } else {
+        setSession(null);
+        setUser(null);
       }
       setLoading(false);
     });

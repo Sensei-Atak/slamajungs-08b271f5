@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 function normalizeForEmail(str: string): string {
@@ -27,6 +28,7 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -34,6 +36,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
+      localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
       await signIn(email, password);
       navigate("/feed");
     } catch (err: any) {
@@ -183,6 +186,16 @@ export default function Login() {
               <div className="space-y-2">
                 <Label htmlFor="password">Passwort</Label>
                 <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                />
+                <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
+                  Auf diesem Gerät angemeldet bleiben
+                </Label>
               </div>
               <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
                 {loading ? "Wird angemeldet..." : "Anmelden"}
