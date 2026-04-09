@@ -35,6 +35,21 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [pendingResets, setPendingResets] = useState(0);
+
+  useEffect(() => {
+    if (!isCoach) return;
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from("password_reset_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      setPendingResets(count || 0);
+    };
+    fetchPending();
+    const interval = setInterval(fetchPending, 30000);
+    return () => clearInterval(interval);
+  }, [isCoach]);
 
   const filteredItems = navItems.filter(
     (item) => !item.coachOnly || isCoach
