@@ -97,7 +97,12 @@ export default function AppLayout() {
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
-                {sidebarOpen && <span>{item.label}</span>}
+                {sidebarOpen && <span className="flex-1">{item.label}</span>}
+                {item.path === "/verwaltung" && pendingResets > 0 && (
+                  <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs">
+                    {pendingResets}
+                  </Badge>
+                )}
               </button>
             );
           })}
