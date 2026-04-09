@@ -270,6 +270,14 @@ export default function Verwaltung() {
           <TabsTrigger value="spieler">Spieler</TabsTrigger>
           <TabsTrigger value="spiele">Spiele</TabsTrigger>
           <TabsTrigger value="verpasst">Verpasste Abgaben</TabsTrigger>
+          <TabsTrigger value="passwort" className="relative">
+            Passwort
+            {resetRequests.length > 0 && (
+              <Badge variant="destructive" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
+                {resetRequests.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="spieler" className="space-y-3">
@@ -307,6 +315,16 @@ export default function Verwaltung() {
                             onClick={() => openEditPlayer(p)}
                           >
                             <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px]"
+                            onClick={() => handleResetPassword(p)}
+                            disabled={resetting}
+                            title="Passwort zurücksetzen"
+                          >
+                            <Key className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
