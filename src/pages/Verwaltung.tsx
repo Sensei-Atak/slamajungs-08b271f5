@@ -160,6 +160,40 @@ export default function Verwaltung() {
     }
   };
 
+  const openEditPlayer = (player: Player) => {
+    setEditPlayer(player);
+    setEditJersey(player.jersey_number?.toString() || "");
+    setEditPositions(
+      player.position ? player.position.split(",").map((p) => p.trim()).filter(Boolean) : []
+    );
+  };
+
+  const handleEditSave = async () => {
+    if (!editPlayer) return;
+    setEditSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        jersey_number: editJersey ? Number(editJersey) : null,
+        position: editPositions.length > 0 ? editPositions.join(", ") : null,
+      })
+      .eq("id", editPlayer.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Spieler aktualisiert");
+      setEditPlayer(null);
+      fetchAll();
+    }
+    setEditSaving(false);
+  };
+
+  const toggleEditPosition = (pos: string) => {
+    setEditPositions((prev) =>
+      prev.includes(pos) ? prev.filter((p) => p !== pos) : [...prev, pos]
+    );
+  };
+
   const toggleActive = async (player: Player) => {
     await supabase
       .from("profiles")
