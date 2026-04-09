@@ -389,7 +389,11 @@ export type Database = {
           description: string | null
           id: string
           is_closed: boolean
+          link_url: string | null
+          pdf_url: string | null
+          photo_url: string | null
           title: string
+          youtube_url: string | null
         }
         Insert: {
           created_at?: string
@@ -397,7 +401,11 @@ export type Database = {
           description?: string | null
           id?: string
           is_closed?: boolean
+          link_url?: string | null
+          pdf_url?: string | null
+          photo_url?: string | null
           title: string
+          youtube_url?: string | null
         }
         Update: {
           created_at?: string
@@ -405,7 +413,11 @@ export type Database = {
           description?: string | null
           id?: string
           is_closed?: boolean
+          link_url?: string | null
+          pdf_url?: string | null
+          photo_url?: string | null
           title?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }
