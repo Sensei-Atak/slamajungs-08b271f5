@@ -104,7 +104,39 @@ export default function GameSummary() {
         )}
       </div>
 
-      <Card>
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {rows.map((r) => (
+          <Card key={r.player_id}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">{r.name}</span>
+                <span className="text-lg font-bold tabular-nums">{r.pts} PTS</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                {[
+                  { label: "FW", value: `${r.fw_made}/${r.fw_attempted}` },
+                  { label: "2P", value: `${r.twop_made}/${r.twop_attempted}` },
+                  { label: "3P", value: `${r.threep_made}/${r.threep_attempted}` },
+                  { label: "REB", value: r.reb },
+                  { label: "AST", value: r.ast },
+                  { label: "STL", value: r.stl },
+                  { label: "BLK", value: r.blk },
+                  { label: "TO", value: r.to_count },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="text-[10px] text-muted-foreground uppercase">{s.label}</p>
+                    <p className="text-sm font-semibold tabular-nums">{s.value}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <Card className="hidden md:block">
         <CardContent className="pt-4 overflow-x-auto">
           <Table>
             <TableHeader>
