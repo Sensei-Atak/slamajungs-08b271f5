@@ -421,6 +421,57 @@ export default function Verwaltung() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="passwort" className="space-y-3">
+          {resetRequests.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                Keine offenen Passwort-Anfragen
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                {resetRequests.map((r) => {
+                  const player = players.find((p) => p.id === r.player_id);
+                  return (
+                    <div key={r.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+                      <div>
+                        <p className="font-medium">{r.player_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString("de-DE")}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="min-h-[44px]"
+                          onClick={() => player && handleResetPassword(player, r.id)}
+                          disabled={resetting}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Genehmigen
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="min-h-[44px]"
+                          onClick={() => handleRejectRequest(r.id)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Ablehnen
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Du kannst auch direkt bei einem Spieler im Tab "Spieler" über das Schlüssel-Icon ein neues Passwort setzen.
+          </p>
+        </TabsContent>
       </Tabs>
 
       {/* Add player dialog */}
