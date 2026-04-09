@@ -18,7 +18,15 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil } from "lucide-react";
+
+const POSITIONS = [
+  "Point Guard",
+  "Shooting Guard",
+  "Small Forward",
+  "Power Forward",
+  "Center",
+] as const;
 
 interface Player {
   id: string;
@@ -54,6 +62,12 @@ export default function Verwaltung() {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
 
+  // Edit player
+  const [editPlayer, setEditPlayer] = useState<Player | null>(null);
+  const [editJersey, setEditJersey] = useState("");
+  const [editPositions, setEditPositions] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+
   // Add player form
   const [newName, setNewName] = useState("");
   const [newJersey, setNewJersey] = useState("");
@@ -61,7 +75,6 @@ export default function Verwaltung() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
-
   useEffect(() => {
     if (!isCoach) {
       navigate("/feed");
@@ -147,6 +160,40 @@ export default function Verwaltung() {
     }
   };
 
+  const openEditPlayer = (player: Player) => {
+    setEditPlayer(player);
+    setEditJersey(player.jersey_number?.toString() || "");
+    setEditPositions(
+      player.position ? player.position.split(",").map((p) => p.trim()).filter(Boolean) : []
+    );
+  };
+
+  const handleEditSave = async () => {
+    if (!editPlayer) return;
+    setEditSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        jersey_number: editJersey ? Number(editJersey) : null,
+        position: editPositions.length > 0 ? editPositions.join(", ") : null,
+      })
+      .eq("id", editPlayer.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Spieler aktualisiert");
+      setEditPlayer(null);
+      fetchAll();
+    }
+    setEditSaving(false);
+  };
+
+  const toggleEditPosition = (pos: string) => {
+    setEditPositions((prev) =>
+      prev.includes(pos) ? prev.filter((p) => p !== pos) : [...prev, pos]
+    );
+  };
+
   const toggleActive = async (player: Player) => {
     await supabase
       .from("profiles")
@@ -202,18 +249,28 @@ export default function Verwaltung() {
                       <TableCell>{p.position || "–"}</TableCell>
                       <TableCell>{p.is_active ? "Aktiv" : "Inaktiv"}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="min-w-[44px] min-h-[44px]"
-                          onClick={() => toggleActive(p)}
-                        >
-                          {p.is_active ? (
-                            <UserX className="h-4 w-4" />
-                          ) : (
-                            <RotateCcw className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px]"
+                            onClick={() => openEditPlayer(p)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px]"
+                            onClick={() => toggleActive(p)}
+                          >
+                            {p.is_active ? (
+                              <UserX className="h-4 w-4" />
+                            ) : (
+                              <RotateCcw className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -350,6 +407,49 @@ export default function Verwaltung() {
               {creating ? "Wird erstellt..." : "Spieler erstellen"}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit player dialog */}
+      <Dialog open={!!editPlayer} onOpenChange={(open) => !open && setEditPlayer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editPlayer?.name} bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Trikotnummer</Label>
+              <Input
+                type="number"
+                value={editJersey}
+                onChange={(e) => setEditJersey(e.target.value)}
+                placeholder="z.B. 23"
+                className="w-24"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Position(en)</Label>
+              <div className="flex flex-wrap gap-2">
+                {POSITIONS.map((pos) => (
+                  <button
+                    key={pos}
+                    type="button"
+                    onClick={() => toggleEditPosition(pos)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      editPositions.includes(pos)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {pos}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleEditSave} disabled={editSaving} className="w-full min-h-[44px]">
+              {editSaving ? "Wird gespeichert..." : "Speichern"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
