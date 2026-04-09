@@ -224,7 +224,44 @@ export default function Statistiken() {
       {averages.length > 0 && averages.some((a) => a.games > 0) ? (
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">Spieler-Durchschnitte</h2>
-          <Card>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-2">
+            {sorted.map((p) => (
+              <Card
+                key={p.id}
+                className="cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => navigate(`/statistiken/spieler/${p.id}`)}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{p.name}</span>
+                    <span className="text-xs text-muted-foreground">{p.games} Spiele</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    {[
+                      { label: "PPG", value: p.ppg },
+                      { label: "RPG", value: p.rpg },
+                      { label: "APG", value: p.apg },
+                      { label: "SPG", value: p.spg },
+                      { label: "FW%", value: `${p.fwPct}%` },
+                      { label: "2P%", value: `${p.twoPct}%` },
+                      { label: "3P%", value: `${p.threePct}%` },
+                      { label: "TOPG", value: p.topg },
+                    ].map((s) => (
+                      <div key={s.label}>
+                        <p className="text-[10px] text-muted-foreground uppercase">{s.label}</p>
+                        <p className="text-sm font-semibold tabular-nums">{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden md:block">
             <CardContent className="pt-4 overflow-x-auto">
               <Table>
                 <TableHeader>

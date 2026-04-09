@@ -82,7 +82,7 @@ export default function PlayerStats() {
             <Card>
               <CardContent className="pt-4">
                 <p className="text-sm font-medium mb-2">Saisondurchschnitt ({g} Spiele)</p>
-                <div className="grid grid-cols-5 gap-3 text-center">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 text-center">
                   {Object.entries({
                     PPG: avg.ppg, RPG: avg.rpg, APG: avg.apg, BPG: avg.bpg,
                     SPG: avg.spg, TOPG: avg.topg, FPG: avg.fpg,
@@ -98,7 +98,42 @@ export default function PlayerStats() {
             </Card>
           )}
 
-          <Card>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-2">
+            {gameStats.map((s) => (
+              <Card key={s.id}>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <span className="font-medium">{s.game?.opponent}</span>
+                      <p className="text-xs text-muted-foreground">{s.game?.date}</p>
+                    </div>
+                    <span className="text-lg font-bold tabular-nums">{s.pts} PTS</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    {[
+                      { label: "FW", value: `${s.fw_made}/${s.fw_attempted}` },
+                      { label: "2P", value: `${s.twop_made}/${s.twop_attempted}` },
+                      { label: "3P", value: `${s.threep_made}/${s.threep_attempted}` },
+                      { label: "REB", value: s.reb },
+                      { label: "AST", value: s.ast },
+                      { label: "STL", value: s.stl },
+                      { label: "BLK", value: s.blk },
+                      { label: "TO", value: s.to_count },
+                    ].map((stat) => (
+                      <div key={stat.label}>
+                        <p className="text-[10px] text-muted-foreground uppercase">{stat.label}</p>
+                        <p className="text-sm font-semibold tabular-nums">{stat.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden md:block">
             <CardContent className="pt-4 overflow-x-auto">
               <Table>
                 <TableHeader>
