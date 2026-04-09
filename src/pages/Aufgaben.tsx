@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Plus,
@@ -58,7 +59,10 @@ export default function Aufgaben() {
   const [description, setDescription] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoPlayerName, setVideoPlayerName] = useState("");
 
   const fetchAll = async () => {
     const [tasksRes, subsRes, playersRes] = await Promise.all([
@@ -122,13 +126,36 @@ export default function Aufgaben() {
   const handleVideoUpload = async (taskId: string, file: File) => {
     if (!user) return;
     setUploading(taskId);
+    setUploadProgress(0);
     try {
       const ext = file.name.split(".").pop();
       const path = `${user.id}/${taskId}_${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("task-videos")
-        .upload(path, file);
-      if (uploadError) throw uploadError;
+
+      // Use XMLHttpRequest for progress tracking
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        });
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Upload fehlgeschlagen (${xhr.status})`));
+          }
+        });
+        xhr.addEventListener("error", () => reject(new Error("Upload fehlgeschlagen")));
+        xhr.open("POST", `${supabaseUrl}/storage/v1/object/task-videos/${path}`);
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.setRequestHeader("x-upsert", "false");
+        xhr.send(file);
+      });
 
       const { error } = await supabase.from("task_submissions").insert({
         task_id: taskId,
@@ -142,6 +169,17 @@ export default function Aufgaben() {
       toast.error(err.message);
     } finally {
       setUploading(null);
+      setUploadProgress(0);
+    }
+  };
+
+  const openVideo = async (sub: Submission, playerName: string) => {
+    const { data } = await supabase.storage
+      .from("task-videos")
+      .createSignedUrl(sub.video_url, 3600);
+    if (data?.signedUrl) {
+      setVideoUrl(data.signedUrl);
+      setVideoPlayerName(playerName);
     }
   };
 
@@ -196,6 +234,25 @@ export default function Aufgaben() {
               Erstellen
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* In-app video player dialog */}
+      <Dialog open={!!videoUrl} onOpenChange={() => setVideoUrl(null)}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>{videoPlayerName}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 pt-2">
+            {videoUrl && (
+              <video
+                src={videoUrl}
+                controls
+                autoPlay
+                className="w-full rounded-lg max-h-[70vh]"
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -266,19 +323,24 @@ export default function Aufgaben() {
                           <AlertTriangle className="h-3 w-3" />
                           Verpasst
                         </Badge>
+                      ) : uploading === task.id ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Wird hochgeladen...</span>
+                            <span className="font-medium">{uploadProgress}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="h-3" />
+                        </div>
                       ) : (
                         <label className="cursor-pointer">
                           <Button
                             variant="outline"
                             className="min-h-[44px] gap-2"
-                            disabled={uploading === task.id}
                             asChild
                           >
                             <span>
                               <Upload className="h-4 w-4" />
-                              {uploading === task.id
-                                ? "Wird hochgeladen..."
-                                : "Video hochladen"}
+                              Video hochladen
                             </span>
                           </Button>
                           <input
@@ -362,13 +424,9 @@ export default function Aufgaben() {
                           size="sm"
                           variant="ghost"
                           className="min-h-[44px] min-w-[44px]"
-                          onClick={async () => {
-                            const { data } = await supabase.storage
-                              .from("task-videos")
-                              .createSignedUrl(sub.video_url, 3600);
-                            if (data?.signedUrl) {
-                              window.open(data.signedUrl, "_blank");
-                            }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openVideo(sub, player.name);
                           }}
                         >
                           <Play className="h-4 w-4" />
