@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { StorageImage } from "@/components/ui/storage-image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -70,8 +71,9 @@ export default function PhotoCard({ post, likes, comments, onDelete, onRefresh }
 
         {post.image_url && (
           <div className="flex justify-center bg-muted/30 rounded-lg overflow-hidden">
-            <img
-              src={post.image_url}
+            <StorageImage
+              bucket="meal-photos"
+              storedPath={post.image_url}
               alt="Foto"
               className="w-auto max-w-full rounded-lg object-contain"
               style={{ maxHeight: "500px", aspectRatio: "9/16" }}

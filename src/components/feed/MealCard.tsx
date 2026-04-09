@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { StorageImage } from "@/components/ui/storage-image";
 import { Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
@@ -58,8 +59,9 @@ export default function MealCard({ meal, ratings, comments, onDelete, onRated }:
           )}
         </div>
         <div className="flex justify-center bg-muted/30 rounded-lg overflow-hidden">
-          <img
-            src={meal.image_url}
+          <StorageImage
+            bucket="meal-photos"
+            storedPath={meal.image_url}
             alt="Mahlzeit"
             className="w-auto max-w-full rounded-lg object-contain"
             style={{ maxHeight: "500px", aspectRatio: "9/16" }}
