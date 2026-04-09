@@ -158,33 +158,33 @@ export default function Statistiken() {
             {scheduledGames.map((g) => (
               <Card key={g.id} className="cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => navigate(`/statistiken/live/${g.id}`)}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="font-semibold">
+                <CardContent className="p-4 flex items-center justify-between gap-2">
+                  <div className="space-y-1 min-w-0">
+                    <div className="font-semibold truncate">
                       {g.is_home_game ? "vs." : "@"} {g.opponent}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
+                        <Calendar className="h-3.5 w-3.5 shrink-0" />
                         {formatDate(g.date)}
                       </span>
                       {g.game_time && (
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
+                          <Clock className="h-3.5 w-3.5 shrink-0" />
                           {formatTime(g.game_time)}
                         </span>
                       )}
                       {g.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {g.location}
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{g.location}</span>
                         </span>
                       )}
                     </div>
                   </div>
                   <Button size="sm" className="gap-1.5 shrink-0">
                     <Play className="h-3.5 w-3.5" />
-                    Live-Statistik
+                    <span className="hidden sm:inline">Live-Statistik</span>
                   </Button>
                 </CardContent>
               </Card>

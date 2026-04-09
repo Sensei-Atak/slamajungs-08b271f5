@@ -271,14 +271,14 @@ export default function Verwaltung() {
       <h1 className="text-xl font-semibold">Verwaltung</h1>
 
       <Tabs defaultValue="spieler">
-        <TabsList>
-          <TabsTrigger value="spieler">Spieler</TabsTrigger>
-          <TabsTrigger value="spiele">Spiele</TabsTrigger>
-          <TabsTrigger value="verpasst">Verpasste Abgaben</TabsTrigger>
-          <TabsTrigger value="passwort" className="relative">
+        <TabsList className="w-full grid grid-cols-4 h-auto">
+          <TabsTrigger value="spieler" className="text-xs sm:text-sm">Spieler</TabsTrigger>
+          <TabsTrigger value="spiele" className="text-xs sm:text-sm">Spiele</TabsTrigger>
+          <TabsTrigger value="verpasst" className="text-xs sm:text-sm"><span className="sm:hidden">Verpasst</span><span className="hidden sm:inline">Verpasste Abgaben</span></TabsTrigger>
+          <TabsTrigger value="passwort" className="relative text-xs sm:text-sm">
             Passwort
             {resetRequests.length > 0 && (
-              <Badge variant="destructive" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
+              <Badge variant="destructive" className="ml-1 h-4 min-w-[16px] px-1 text-[10px] sm:ml-1.5 sm:h-5 sm:min-w-[20px] sm:text-xs">
                 {resetRequests.length}
               </Badge>
             )}
