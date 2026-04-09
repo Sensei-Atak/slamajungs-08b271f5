@@ -25,9 +25,11 @@ interface ScheduleGameDialogProps {
 
 export default function ScheduleGameDialog({ open, onOpenChange, onCreated, players }: ScheduleGameDialogProps) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [time, setTime] = useState("");
+  const [tipOff, setTipOff] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
   const [opponent, setOpponent] = useState("");
   const [location, setLocation] = useState("");
+  const [isHome, setIsHome] = useState(true);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -60,8 +62,10 @@ export default function ScheduleGameDialog({ open, onOpenChange, onCreated, play
         .insert({
           date,
           opponent: opponent.trim(),
-          game_time: time || null,
+          game_time: tipOff || null,
+          meeting_time: meetingTime || null,
           location: location.trim() || null,
+          is_home_game: isHome,
           status: "scheduled",
         } as any)
         .select()
@@ -84,7 +88,9 @@ export default function ScheduleGameDialog({ open, onOpenChange, onCreated, play
       onOpenChange(false);
       setOpponent("");
       setLocation("");
-      setTime("");
+      setTipOff("");
+      setMeetingTime("");
+      setIsHome(true);
       setSelectedPlayers([]);
       onCreated();
     } catch (err: any) {
@@ -111,8 +117,37 @@ export default function ScheduleGameDialog({ open, onOpenChange, onCreated, play
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label>Uhrzeit</Label>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              <Label>Tip-Off</Label>
+              <Input type="time" value={tipOff} onChange={(e) => setTipOff(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Treffpunkt-Zeit</Label>
+              <Input type="time" value={meetingTime} onChange={(e) => setMeetingTime(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Heim / Auswärts</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsHome(true)}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isHome ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  Heim
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHome(false)}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    !isHome ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  Auswärts
+                </button>
+              </div>
             </div>
           </div>
           <div className="space-y-2">
