@@ -18,6 +18,7 @@ export default function Profil() {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const signedAvatarUrl = useSignedUrl("avatars", avatarUrl);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const positions = profile?.position ? profile.position.split(",").map((p) => p.trim()).filter(Boolean) : [];
@@ -78,7 +79,7 @@ export default function Profil() {
           <div className="flex items-center gap-4">
             <div className="relative group">
               <Avatar className="w-20 h-20">
-                {avatarUrl && <AvatarImage src={useSignedUrl("avatars", avatarUrl) || undefined} alt={name} />}
+                {signedAvatarUrl && <AvatarImage src={signedAvatarUrl} alt={name} />}
                 <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>
