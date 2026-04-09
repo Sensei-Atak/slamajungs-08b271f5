@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSignedUrl } from "@/lib/storage";
+import { StorageImage } from "@/components/ui/storage-image";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,7 +78,7 @@ export default function Profil() {
           <div className="flex items-center gap-4">
             <div className="relative group">
               <Avatar className="w-20 h-20">
-                {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+                {avatarUrl && <AvatarImage src={useSignedUrl("avatars", avatarUrl) || undefined} alt={name} />}
                 <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>
