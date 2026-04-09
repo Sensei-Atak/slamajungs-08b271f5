@@ -18,7 +18,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw, Pencil } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const POSITIONS = [
   "Point Guard",
@@ -53,14 +54,28 @@ interface MissedRow {
   rate: number;
 }
 
+interface ResetRequest {
+  id: string;
+  player_id: string;
+  status: string;
+  created_at: string;
+  player_name?: string;
+}
+
 export default function Verwaltung() {
-  const { isCoach } = useAuth();
+  const { isCoach, session } = useAuth();
   const navigate = useNavigate();
   const [players, setPlayers] = useState<Player[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [missedData, setMissedData] = useState<MissedRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
+  const [resetRequests, setResetRequests] = useState<ResetRequest[]>([]);
+
+  // Password reset
+  const [resetPlayer, setResetPlayer] = useState<Player | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   // Edit player
   const [editPlayer, setEditPlayer] = useState<Player | null>(null);
@@ -84,14 +99,24 @@ export default function Verwaltung() {
   }, [isCoach, navigate]);
 
   const fetchAll = async () => {
-    const [playersRes, gamesRes, tasksRes, subsRes] = await Promise.all([
+    const [playersRes, gamesRes, tasksRes, subsRes, resetRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("role", "spieler").order("name"),
       supabase.from("games").select("*").order("date", { ascending: false }),
       supabase.from("tasks").select("*").eq("is_closed", true),
       supabase.from("task_submissions").select("*"),
+      supabase.from("password_reset_requests").select("*").eq("status", "pending").order("created_at", { ascending: false }),
     ]);
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
     if (gamesRes.data) setGames(gamesRes.data);
+
+    // Map reset requests with player names
+    if (resetRes.data && playersRes.data) {
+      const mapped = (resetRes.data as any[]).map((r) => {
+        const player = (playersRes.data as Player[]).find((p) => p.id === r.player_id);
+        return { ...r, player_name: player?.name || "Unbekannt" } as ResetRequest;
+      });
+      setResetRequests(mapped);
+    }
 
     // Calculate missed submissions
     if (playersRes.data && tasksRes.data && subsRes.data) {
