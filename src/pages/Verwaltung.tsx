@@ -375,7 +375,50 @@ export default function Verwaltung() {
               Spiel ansetzen
             </Button>
           </div>
-          <Card>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-2">
+            {games.map((g) => {
+              const isScheduled = g.status === "scheduled";
+              return (
+                <Card
+                  key={g.id}
+                  className="cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => isScheduled ? navigate(`/statistiken/live/${g.id}`) : navigate(`/statistiken/spiel/${g.id}`)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-medium">{g.opponent}</span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                          <span>{g.date}</span>
+                          {g.game_time && <span>{g.game_time.slice(0, 5)}</span>}
+                          {g.location && <span>{g.location}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isScheduled ? (
+                          <Badge variant="outline" className="text-xs"><Calendar className="h-3 w-3 mr-1" />Geplant</Badge>
+                        ) : (
+                          <span className="font-bold tabular-nums">{g.score_home} : {g.score_away}</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={(e) => { e.stopPropagation(); setDeleteGameId(g.id); }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden md:block">
             <CardContent className="pt-4 overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -420,10 +463,7 @@ export default function Verwaltung() {
                             variant="ghost"
                             size="icon"
                             className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteGameId(g.id);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); setDeleteGameId(g.id); }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -438,7 +478,36 @@ export default function Verwaltung() {
         </TabsContent>
 
         <TabsContent value="verpasst" className="space-y-3">
-          <Card>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-2">
+            {missedData.map((m) => (
+              <Card key={m.id}>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{m.name}</span>
+                    <span className="text-sm tabular-nums">{m.rate}%</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center mt-2">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Gesamt</p>
+                      <p className="text-sm font-semibold tabular-nums">{m.total}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Abgegeben</p>
+                      <p className="text-sm font-semibold tabular-nums">{m.submitted}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Verpasst</p>
+                      <p className="text-sm font-semibold tabular-nums text-destructive">{m.missed}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden md:block">
             <CardContent className="pt-4 overflow-x-auto">
               <Table>
                 <TableHeader>
