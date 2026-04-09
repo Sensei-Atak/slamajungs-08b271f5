@@ -499,6 +499,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       is_coach: { Args: { _user_id: string }; Returns: boolean }
+      must_change_password: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "coach" | "spieler"
