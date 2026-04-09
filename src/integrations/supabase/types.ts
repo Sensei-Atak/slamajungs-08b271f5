@@ -76,7 +76,9 @@ export type Database = {
           date: string
           game_time: string | null
           id: string
+          is_home_game: boolean
           location: string | null
+          meeting_time: string | null
           opponent: string
           score_away: number
           score_home: number
@@ -87,7 +89,9 @@ export type Database = {
           date: string
           game_time?: string | null
           id?: string
+          is_home_game?: boolean
           location?: string | null
+          meeting_time?: string | null
           opponent: string
           score_away?: number
           score_home?: number
@@ -98,7 +102,9 @@ export type Database = {
           date?: string
           game_time?: string | null
           id?: string
+          is_home_game?: boolean
           location?: string | null
+          meeting_time?: string | null
           opponent?: string
           score_away?: number
           score_home?: number

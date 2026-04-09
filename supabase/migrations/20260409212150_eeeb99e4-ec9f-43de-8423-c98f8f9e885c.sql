@@ -1,0 +1,4 @@
+
+ALTER TABLE public.games
+ADD COLUMN meeting_time TIME WITHOUT TIME ZONE,
+ADD COLUMN is_home_game BOOLEAN NOT NULL DEFAULT true;
