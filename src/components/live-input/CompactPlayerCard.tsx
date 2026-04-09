@@ -32,6 +32,8 @@ interface CompactPlayerCardProps {
   onQuickScore: (type: "fw" | "twop" | "threep") => void;
   onSubstitute: () => void;
   onOverridePts: (val: number) => void;
+  isCaptain?: boolean;
+  isStarter?: boolean;
 }
 
 export function CompactPlayerCard({
@@ -40,6 +42,8 @@ export function CompactPlayerCard({
   onQuickScore,
   onSubstitute,
   onOverridePts,
+  isCaptain,
+  isStarter,
 }: CompactPlayerCardProps) {
   const pts = calcPts(player);
 
@@ -97,7 +101,15 @@ export function CompactPlayerCard({
               #{player.jersey_number}
             </span>
           )}
-          <span className="font-semibold text-sm truncate">{player.name}</span>
+          <span className={cn(
+            "font-semibold text-sm truncate",
+            isStarter && "text-red-500"
+          )}>
+            {player.name}
+          </span>
+          {isCaptain && (
+            <span className="text-[10px] font-bold text-muted-foreground leading-none">c</span>
+          )}
         </div>
         <button
           onClick={() => {
