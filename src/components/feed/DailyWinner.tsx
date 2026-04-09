@@ -1,5 +1,6 @@
 import { Trophy, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { StorageImage } from "@/components/ui/storage-image";
 
 interface DailyWinnerProps {
   winner: {
@@ -22,8 +23,9 @@ export default function DailyWinner({ winner }: DailyWinnerProps) {
           <h2 className="font-semibold text-sm">Mahlzeit des Tages</h2>
         </div>
         <div className="flex gap-3">
-          <img
-            src={winner.image_url}
+          <StorageImage
+            bucket="meal-photos"
+            storedPath={winner.image_url}
             alt="Tagessieger"
             className="w-20 h-28 rounded-lg object-cover flex-shrink-0"
           />

@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSignedUrl } from "@/lib/storage";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +18,7 @@ export default function Profil() {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const signedAvatarUrl = useSignedUrl("avatars", avatarUrl);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const positions = profile?.position ? profile.position.split(",").map((p) => p.trim()).filter(Boolean) : [];
@@ -31,11 +34,10 @@ export default function Profil() {
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      const url = `${data.publicUrl}?t=${Date.now()}`;
-      setAvatarUrl(url);
+      const storedPath = `${path}?t=${Date.now()}`;
+      setAvatarUrl(storedPath);
 
-      await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      await supabase.from("profiles").update({ avatar_url: storedPath }).eq("id", user.id);
       toast.success("Profilbild aktualisiert");
     } catch (err: any) {
       toast.error(err.message);
@@ -77,7 +79,7 @@ export default function Profil() {
           <div className="flex items-center gap-4">
             <div className="relative group">
               <Avatar className="w-20 h-20">
-                {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+                {signedAvatarUrl && <AvatarImage src={signedAvatarUrl} alt={name} />}
                 <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>

@@ -67,12 +67,10 @@ export default function PhotoUploadForm({ onPosted, onCancel }: PhotoUploadFormP
         .upload(path, croppedBlob, { contentType: "image/jpeg" });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("meal-photos").getPublicUrl(path);
-
       const { error } = await supabase.from("feed_posts").insert({
         user_id: user.id,
         post_type: "photo" as const,
-        image_url: urlData.publicUrl,
+        image_url: path,
         caption: caption || null,
       });
       if (error) throw error;

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { StorageImage } from "@/components/ui/storage-image";
+import { useSignedUrl } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -88,8 +90,7 @@ export default function Aufgaben() {
     const path = `${folder}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("task-media").upload(path, file);
     if (error) throw error;
-    const { data } = supabase.storage.from("task-media").getPublicUrl(path);
-    return data.publicUrl;
+    return path;
   };
 
   const createTask = async (e: React.FormEvent) => {
@@ -202,6 +203,17 @@ export default function Aufgaben() {
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
+  const TaskPdfLink = ({ pdfPath }: { pdfPath: string }) => {
+    const signedUrl = useSignedUrl("task-media", pdfPath);
+    if (!signedUrl) return null;
+    return (
+      <a href={signedUrl} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 text-sm text-primary hover:underline">
+        <FileText className="h-4 w-4" /> PDF anzeigen
+      </a>
+    );
+  };
+
   const TaskMediaDisplay = ({ task }: { task: Task }) => (
     <div className="space-y-2 mt-2">
       {task.youtube_url && (
@@ -228,13 +240,10 @@ export default function Aufgaben() {
         </a>
       )}
       {task.photo_url && (
-        <img src={task.photo_url} alt="Aufgabe" className="rounded-lg max-h-48 object-cover" />
+        <StorageImage bucket="task-media" storedPath={task.photo_url} alt="Aufgabe" className="rounded-lg max-h-48 object-cover" />
       )}
       {task.pdf_url && (
-        <a href={task.pdf_url} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 text-sm text-primary hover:underline">
-          <FileText className="h-4 w-4" /> PDF anzeigen
-        </a>
+        <TaskPdfLink pdfPath={task.pdf_url} />
       )}
     </div>
   );
