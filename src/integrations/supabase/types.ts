@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      feed_posts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          post_type: Database["public"]["Enums"]["post_type"]
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          post_type: Database["public"]["Enums"]["post_type"]
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          post_type?: Database["public"]["Enums"]["post_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       games: {
         Row: {
           created_at: string
@@ -40,6 +67,70 @@ export type Database = {
           score_home?: number
         }
         Relationships: []
+      }
+      hangout_details: {
+        Row: {
+          date: string
+          id: string
+          location: string
+          post_id: string
+          time: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          location: string
+          post_id: string
+          time: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          location?: string
+          post_id?: string
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangout_details_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hangout_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reaction: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangout_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meal_ratings: {
         Row: {
@@ -162,6 +253,67 @@ export type Database = {
           },
         ]
       }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -270,6 +422,7 @@ export type Database = {
     }
     Enums: {
       app_role: "coach" | "spieler"
+      post_type: "meal" | "hangout" | "photo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,6 +551,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["coach", "spieler"],
+      post_type: ["meal", "hangout", "photo"],
     },
   },
 } as const
