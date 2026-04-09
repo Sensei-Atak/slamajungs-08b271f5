@@ -228,6 +228,31 @@ export default function Verwaltung() {
     toast.success(player.is_active ? "Spieler deaktiviert" : "Spieler aktiviert");
   };
 
+  const handleResetPassword = async (player: Player, requestId?: string) => {
+    setResetting(true);
+    const tempPassword = Math.random().toString(36).slice(-4) + Math.random().toString(36).slice(-4);
+    try {
+      const { data, error } = await supabase.functions.invoke("reset-player-password", {
+        body: { player_id: player.id, new_password: tempPassword, request_id: requestId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGeneratedPassword(tempPassword);
+      setResetPlayer(player);
+      fetchAll();
+    } catch (err: any) {
+      toast.error("Fehler: " + err.message);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    await supabase.from("password_reset_requests").update({ status: "rejected" } as any).eq("id", requestId);
+    fetchAll();
+    toast.success("Anfrage abgelehnt");
+  };
+
   const deleteGame = async () => {
     if (!deleteGameId) return;
     await supabase.from("games").delete().eq("id", deleteGameId);
