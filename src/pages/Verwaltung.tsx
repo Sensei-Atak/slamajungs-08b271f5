@@ -249,18 +249,28 @@ export default function Verwaltung() {
                       <TableCell>{p.position || "–"}</TableCell>
                       <TableCell>{p.is_active ? "Aktiv" : "Inaktiv"}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="min-w-[44px] min-h-[44px]"
-                          onClick={() => toggleActive(p)}
-                        >
-                          {p.is_active ? (
-                            <UserX className="h-4 w-4" />
-                          ) : (
-                            <RotateCcw className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px]"
+                            onClick={() => openEditPlayer(p)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px]"
+                            onClick={() => toggleActive(p)}
+                          >
+                            {p.is_active ? (
+                              <UserX className="h-4 w-4" />
+                            ) : (
+                              <RotateCcw className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
