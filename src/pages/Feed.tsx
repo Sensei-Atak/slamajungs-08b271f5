@@ -84,11 +84,13 @@ export default function Feed() {
   const [hangoutDetails, setHangoutDetails] = useState<HangoutDetail[]>([]);
   const [hangoutReactions, setHangoutReactions] = useState<HangoutReaction[]>([]);
   const [postLikes, setPostLikes] = useState<PostLike[]>([]);
+  const [todayGames, setTodayGames] = useState<{ opponent: string; time: string | null; location: string | null; rosterNames: string[] }[]>([]);
   const [activeForm, setActiveForm] = useState<"meal" | "hangout" | "photo" | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    const [mealsRes, ratingsRes, postsRes, commentsRes, detailsRes, reactionsRes, likesRes] = await Promise.all([
+    const today = format(new Date(), "yyyy-MM-dd");
+    const [mealsRes, ratingsRes, postsRes, commentsRes, detailsRes, reactionsRes, likesRes, todayGamesRes] = await Promise.all([
       supabase.from("meals").select("*").order("created_at", { ascending: false }),
       supabase.from("meal_ratings").select("meal_id, user_id, rating"),
       supabase.from("feed_posts").select("*").order("created_at", { ascending: false }),
@@ -96,6 +98,7 @@ export default function Feed() {
       supabase.from("hangout_details").select("*"),
       supabase.from("hangout_reactions").select("post_id, user_id, reaction"),
       supabase.from("post_likes").select("post_id, user_id"),
+      supabase.from("games").select("*").eq("date", today),
     ]);
 
     // Collect all user IDs
@@ -133,6 +136,34 @@ export default function Feed() {
     if (detailsRes.data) setHangoutDetails(detailsRes.data as HangoutDetail[]);
     if (reactionsRes.data) setHangoutReactions(reactionsRes.data);
     if (likesRes.data) setPostLikes(likesRes.data);
+
+    // Fetch today's games with rosters
+    if (todayGamesRes.data && todayGamesRes.data.length > 0) {
+      const gameIds = todayGamesRes.data.map((g) => g.id);
+      const { data: rosters } = await supabase
+        .from("game_rosters" as any)
+        .select("game_id, player_id")
+        .in("game_id", gameIds);
+
+      const rosterPlayerIds = new Set((rosters || []).map((r: any) => r.player_id));
+      const { data: rosterProfiles } = rosterPlayerIds.size > 0
+        ? await supabase.from("profiles").select("id, name").in("id", [...rosterPlayerIds])
+        : { data: [] };
+      const rosterProfileMap = new Map((rosterProfiles || []).map((p) => [p.id, p.name]));
+
+      setTodayGames(todayGamesRes.data.map((g: any) => {
+        const gameRoster = (rosters || []).filter((r: any) => r.game_id === g.id);
+        return {
+          opponent: g.opponent,
+          time: g.game_time,
+          location: g.location,
+          rosterNames: gameRoster.map((r: any) => rosterProfileMap.get(r.player_id) || "").filter(Boolean),
+        };
+      }));
+    } else {
+      setTodayGames([]);
+    }
+
     setLoading(false);
   };
 
