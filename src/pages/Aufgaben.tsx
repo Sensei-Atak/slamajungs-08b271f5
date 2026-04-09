@@ -203,6 +203,17 @@ export default function Aufgaben() {
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
+  const TaskPdfLink = ({ pdfPath }: { pdfPath: string }) => {
+    const signedUrl = useSignedUrl("task-media", pdfPath);
+    if (!signedUrl) return null;
+    return (
+      <a href={signedUrl} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 text-sm text-primary hover:underline">
+        <FileText className="h-4 w-4" /> PDF anzeigen
+      </a>
+    );
+  };
+
   const TaskMediaDisplay = ({ task }: { task: Task }) => (
     <div className="space-y-2 mt-2">
       {task.youtube_url && (
