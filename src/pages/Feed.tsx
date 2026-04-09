@@ -84,7 +84,7 @@ export default function Feed() {
   const [hangoutDetails, setHangoutDetails] = useState<HangoutDetail[]>([]);
   const [hangoutReactions, setHangoutReactions] = useState<HangoutReaction[]>([]);
   const [postLikes, setPostLikes] = useState<PostLike[]>([]);
-  const [todayGames, setTodayGames] = useState<{ opponent: string; time: string | null; location: string | null; rosterNames: string[] }[]>([]);
+  const [todayGames, setTodayGames] = useState<{ opponent: string; time: string | null; meetingTime: string | null; location: string | null; isHome: boolean; rosterNames: string[] }[]>([]);
   const [activeForm, setActiveForm] = useState<"meal" | "hangout" | "photo" | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -156,7 +156,9 @@ export default function Feed() {
         return {
           opponent: g.opponent,
           time: g.game_time,
+          meetingTime: g.meeting_time,
           location: g.location,
+          isHome: g.is_home_game ?? true,
           rosterNames: gameRoster.map((r: any) => rosterProfileMap.get(r.player_id) || "").filter(Boolean),
         };
       }));
