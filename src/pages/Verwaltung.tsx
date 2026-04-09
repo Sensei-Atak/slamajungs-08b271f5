@@ -18,7 +18,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X, Calendar, Clock, MapPin } from "lucide-react";
+import ScheduleGameDialog from "@/components/verwaltung/ScheduleGameDialog";
 import { Badge } from "@/components/ui/badge";
 
 const POSITIONS = [
@@ -43,6 +44,9 @@ interface Game {
   opponent: string;
   score_home: number;
   score_away: number;
+  game_time: string | null;
+  location: string | null;
+  status: string;
 }
 
 interface MissedRow {
@@ -69,6 +73,7 @@ export default function Verwaltung() {
   const [games, setGames] = useState<Game[]>([]);
   const [missedData, setMissedData] = useState<MissedRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
   const [resetRequests, setResetRequests] = useState<ResetRequest[]>([]);
 
@@ -107,7 +112,7 @@ export default function Verwaltung() {
       supabase.from("password_reset_requests").select("*").eq("status", "pending").order("created_at", { ascending: false }),
     ]);
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
-    if (gamesRes.data) setGames(gamesRes.data);
+    if (gamesRes.data) setGames(gamesRes.data as Game[]);
 
     // Map reset requests with player names
     if (resetRes.data && playersRes.data) {
@@ -349,6 +354,12 @@ export default function Verwaltung() {
         </TabsContent>
 
         <TabsContent value="spiele" className="space-y-3">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowSchedule(true)} className="min-h-[44px] gap-2">
+              <Plus className="h-4 w-4" />
+              Spiel ansetzen
+            </Button>
+          </div>
           <Card>
             <CardContent className="pt-4 overflow-x-auto">
               <Table>
@@ -356,37 +367,55 @@ export default function Verwaltung() {
                   <TableRow>
                     <TableHead>Datum</TableHead>
                     <TableHead>Gegner</TableHead>
-                    <TableHead className="text-center">Ergebnis</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {games.map((g) => (
-                    <TableRow
-                      key={g.id}
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/statistiken/spiel/${g.id}`)}
-                    >
-                      <TableCell>{g.date}</TableCell>
-                      <TableCell>{g.opponent}</TableCell>
-                      <TableCell className="text-center tabular-nums">
-                        {g.score_home} : {g.score_away}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteGameId(g.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {games.map((g) => {
+                    const isScheduled = g.status === "scheduled";
+                    return (
+                      <TableRow
+                        key={g.id}
+                        className="cursor-pointer"
+                        onClick={() => isScheduled ? navigate(`/statistiken/live/${g.id}`) : navigate(`/statistiken/spiel/${g.id}`)}
+                      >
+                        <TableCell>{g.date}</TableCell>
+                        <TableCell className="font-medium">{g.opponent}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                            {g.game_time && (
+                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{g.game_time.slice(0, 5)}</span>
+                            )}
+                            {g.location && (
+                              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{g.location}</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {isScheduled ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary"><Calendar className="h-3 w-3" />Geplant</span>
+                          ) : (
+                            <span className="tabular-nums">{g.score_home} : {g.score_away}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteGameId(g.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -622,6 +651,14 @@ export default function Verwaltung() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Schedule game dialog */}
+      <ScheduleGameDialog
+        open={showSchedule}
+        onOpenChange={setShowSchedule}
+        onCreated={fetchAll}
+        players={players}
+      />
     </div>
   );
 }
