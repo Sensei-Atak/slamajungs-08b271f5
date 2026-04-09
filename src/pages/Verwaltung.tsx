@@ -410,6 +410,49 @@ export default function Verwaltung() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit player dialog */}
+      <Dialog open={!!editPlayer} onOpenChange={(open) => !open && setEditPlayer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editPlayer?.name} bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Trikotnummer</Label>
+              <Input
+                type="number"
+                value={editJersey}
+                onChange={(e) => setEditJersey(e.target.value)}
+                placeholder="z.B. 23"
+                className="w-24"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Position(en)</Label>
+              <div className="flex flex-wrap gap-2">
+                {POSITIONS.map((pos) => (
+                  <button
+                    key={pos}
+                    type="button"
+                    onClick={() => toggleEditPosition(pos)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      editPositions.includes(pos)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {pos}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleEditSave} disabled={editSaving} className="w-full min-h-[44px]">
+              {editSaving ? "Wird gespeichert..." : "Speichern"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete game confirmation */}
       <AlertDialog open={!!deleteGameId} onOpenChange={() => setDeleteGameId(null)}>
         <AlertDialogContent>
