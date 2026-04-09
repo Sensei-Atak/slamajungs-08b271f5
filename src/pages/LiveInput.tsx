@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { StartingFiveSelector } from "@/components/live-input/StartingFiveSelector";
 import { SubstitutionDialog } from "@/components/live-input/SubstitutionDialog";
 import { CompactPlayerCard } from "@/components/live-input/CompactPlayerCard";
+import { LandscapePrompt } from "@/components/live-input/LandscapePrompt";
 
 interface PlayerStat {
   player_id: string;
@@ -47,7 +48,6 @@ export default function LiveInput() {
   const [saving, setSaving] = useState(false);
   const [existingGameId, setExistingGameId] = useState<string | null>(gameId || null);
 
-  // Starting Five & Substitution state
   const [gameStarted, setGameStarted] = useState(!!gameId);
   const [selectedFive, setSelectedFive] = useState<string[]>([]);
   const [onCourt, setOnCourt] = useState<string[]>([]);
@@ -79,7 +79,6 @@ export default function LiveInput() {
             };
           });
           setStats(mapped);
-          // For existing games, show all players who have stats
           const withStats = existingStats.map((s) => s.player_id);
           setOnCourt(withStats.slice(0, 5));
           setGameStarted(true);
@@ -149,7 +148,6 @@ export default function LiveInput() {
         gId = game.id;
         setExistingGameId(gId);
       }
-      // Only save stats for players who have any data
       const rows = stats
         .filter((s) => s.fw_made || s.fw_attempted || s.twop_made || s.twop_attempted ||
           s.threep_made || s.threep_attempted || s.reb || s.ast || s.blk || s.stl ||
@@ -175,10 +173,10 @@ export default function LiveInput() {
     .filter((s) => !onCourt.includes(s.player_id))
     .map((s) => ({ player_id: s.player_id, name: s.name, jersey_number: s.jersey_number }));
 
-  // Pre-game: Starting Five selection
   if (!gameStarted) {
     return (
       <div className="space-y-4">
+        <LandscapePrompt />
         <Card>
           <CardContent className="pt-4">
             <div className="flex flex-wrap gap-3 items-end">
@@ -212,29 +210,29 @@ export default function LiveInput() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Game info bar */}
-      <Card>
-        <CardContent className="py-2 px-3">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-36 h-9 text-sm" />
-            <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="Gegner" className="w-40 h-9 text-sm" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium">SJ</span>
-              <Input type="number" min={0} value={scoreHome} onChange={(e) => setScoreHome(Number(e.target.value))} className="w-14 h-9 text-center text-sm" />
-              <span className="text-sm">:</span>
-              <Input type="number" min={0} value={scoreAway} onChange={(e) => setScoreAway(Number(e.target.value))} className="w-14 h-9 text-center text-sm" />
-              <span className="text-xs text-muted-foreground truncate max-w-[60px]">{opponent || "Gegner"}</span>
-            </div>
-            <Button onClick={handleSave} disabled={saving} size="sm" className="ml-auto min-h-[36px]">
-              {saving ? "Speichern..." : "Spiel beenden"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col h-[calc(100dvh-4rem)] overflow-hidden">
+      <LandscapePrompt />
 
-      {/* Active 5 players - always visible */}
-      <div className="grid gap-2">
+      {/* Game info bar - compact */}
+      <div className="shrink-0 rounded-lg border border-border bg-card p-2 mb-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-32 h-8 text-xs" />
+          <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="Gegner" className="w-32 h-8 text-xs" />
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium">SJ</span>
+            <Input type="number" min={0} value={scoreHome} onChange={(e) => setScoreHome(Number(e.target.value))} className="w-12 h-8 text-center text-xs" />
+            <span className="text-xs">:</span>
+            <Input type="number" min={0} value={scoreAway} onChange={(e) => setScoreAway(Number(e.target.value))} className="w-12 h-8 text-center text-xs" />
+            <span className="text-xs text-muted-foreground truncate max-w-[50px]">{opponent || "Gegner"}</span>
+          </div>
+          <Button onClick={handleSave} disabled={saving} size="sm" className="ml-auto h-8 text-xs">
+            {saving ? "..." : "Beenden"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Active 5 players - fill remaining space */}
+      <div className="flex-1 grid grid-cols-1 gap-1 overflow-y-auto min-h-0">
         {courtPlayers.map((player) => (
           <CompactPlayerCard
             key={player.player_id}
@@ -253,7 +251,6 @@ export default function LiveInput() {
         ))}
       </div>
 
-      {/* Substitution dialog */}
       <SubstitutionDialog
         open={!!subOutPlayer}
         onClose={() => setSubOutPlayer(null)}
