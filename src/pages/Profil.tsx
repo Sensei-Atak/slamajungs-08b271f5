@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Camera } from "lucide-react";
 
 export default function Profil() {
-  const { profile, user, isCoach } = useAuth();
+  const { profile, user, isCoach, signOut } = useAuth();
   const [name, setName] = useState(profile?.name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
@@ -135,6 +135,17 @@ export default function Profil() {
           </Button>
         </CardContent>
       </Card>
+
+      <Button
+        variant="destructive"
+        className="w-full min-h-[44px]"
+        onClick={async () => {
+          await signOut();
+          window.location.href = "/login";
+        }}
+      >
+        Abmelden
+      </Button>
     </div>
   );
 }
