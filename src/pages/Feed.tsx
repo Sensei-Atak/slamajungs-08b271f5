@@ -29,11 +29,24 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
 
   const fetchMeals = async () => {
-    const { data } = await supabase
+    const { data: mealsData } = await supabase
       .from("meals")
-      .select("*, profiles(name, avatar_url)")
+      .select("*")
       .order("created_at", { ascending: false });
-    if (data) setMeals(data as MealPost[]);
+    if (mealsData) {
+      const userIds = [...new Set(mealsData.map((m) => m.user_id))];
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url")
+        .in("id", userIds);
+      const profileMap = new Map(profilesData?.map((p) => [p.id, p]) || []);
+      setMeals(
+        mealsData.map((m) => ({
+          ...m,
+          profiles: profileMap.get(m.user_id) || null,
+        })) as MealPost[]
+      );
+    }
     setLoading(false);
   };
 

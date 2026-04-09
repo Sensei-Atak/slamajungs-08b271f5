@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { profile, isCoach, signOut } = useAuth();
+  const { isCoach, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
