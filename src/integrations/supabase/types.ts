@@ -41,30 +41,68 @@ export type Database = {
         }
         Relationships: []
       }
+      game_rosters: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          player_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          player_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_rosters_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
           created_at: string
           date: string
+          game_time: string | null
           id: string
+          location: string | null
           opponent: string
           score_away: number
           score_home: number
+          status: string
         }
         Insert: {
           created_at?: string
           date: string
+          game_time?: string | null
           id?: string
+          location?: string | null
           opponent: string
           score_away?: number
           score_home?: number
+          status?: string
         }
         Update: {
           created_at?: string
           date?: string
+          game_time?: string | null
           id?: string
+          location?: string | null
           opponent?: string
           score_away?: number
           score_home?: number
+          status?: string
         }
         Relationships: []
       }
