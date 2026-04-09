@@ -1,26 +1,30 @@
 
 
-## Mobile Logout + "Angemeldet bleiben"
+## Fix: Profile Role Escalation Vulnerability
 
-### Änderungen
+### Problem
+The "Users can update own profile" RLS policy has no `WITH CHECK` condition, allowing any user to change their own `role` to `coach`.
 
-**1. Logout nur auf der Profilseite (`Profil.tsx`)**
-- "Abmelden"-Button am Ende der Profilseite hinzufügen (destructive variant, volle Breite)
-- Kein Logout-Icon in der Bottom-Nav — bleibt wie sie ist
+### Solution
+Drop and recreate the policy with a `WITH CHECK` that prevents role changes:
 
-**2. "Angemeldet bleiben" Checkbox (`Login.tsx`)**
-- Checkbox unter dem Passwort-Feld: "Auf diesem Gerät angemeldet bleiben" (Standard: aktiviert)
-- Wenn deaktiviert: `rememberMe = false` in `localStorage` speichern
+**Migration SQL:**
+```sql
+DROP POLICY "Users can update own profile" ON profiles;
 
-**3. Auto-Logout Logik (`AuthContext.tsx`)**
-- Beim App-Start prüfen: wenn `rememberMe` nicht `true` ist → `signOut()` aufrufen
-- Dadurch wird die Session beim nächsten Öffnen beendet
+CREATE POLICY "Users can update own profile" ON profiles
+FOR UPDATE TO authenticated
+USING (auth.uid() = id)
+WITH CHECK (
+  auth.uid() = id
+  AND role = (SELECT role FROM profiles WHERE id = auth.uid())
+);
+```
 
-### Dateien
+This ensures users can update their name, avatar, etc. but cannot change their `role` field.
 
-| Aktion | Datei |
-|--------|-------|
-| Bearbeiten | `src/pages/Profil.tsx` — Abmelden-Button hinzufügen |
-| Bearbeiten | `src/pages/Login.tsx` — "Angemeldet bleiben" Checkbox |
-| Bearbeiten | `src/contexts/AuthContext.tsx` — Remember-me Logik |
+### Files
+| Action | File |
+|--------|------|
+| Migration | Add `WITH CHECK` to profiles UPDATE policy |
 
