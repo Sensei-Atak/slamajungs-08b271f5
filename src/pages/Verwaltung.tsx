@@ -18,7 +18,15 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil } from "lucide-react";
+
+const POSITIONS = [
+  "Point Guard",
+  "Shooting Guard",
+  "Small Forward",
+  "Power Forward",
+  "Center",
+] as const;
 
 interface Player {
   id: string;
@@ -54,6 +62,12 @@ export default function Verwaltung() {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
 
+  // Edit player
+  const [editPlayer, setEditPlayer] = useState<Player | null>(null);
+  const [editJersey, setEditJersey] = useState("");
+  const [editPositions, setEditPositions] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+
   // Add player form
   const [newName, setNewName] = useState("");
   const [newJersey, setNewJersey] = useState("");
@@ -61,7 +75,6 @@ export default function Verwaltung() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
-
   useEffect(() => {
     if (!isCoach) {
       navigate("/feed");

@@ -10,33 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Camera } from "lucide-react";
 
-const POSITIONS = [
-  "Point Guard",
-  "Shooting Guard",
-  "Small Forward",
-  "Power Forward",
-  "Center",
-] as const;
-
 export default function Profil() {
   const { profile, user, isCoach } = useAuth();
   const [name, setName] = useState(profile?.name || "");
-  const [jerseyNumber, setJerseyNumber] = useState<string>(
-    profile?.jersey_number?.toString() || ""
-  );
-  const [selectedPositions, setSelectedPositions] = useState<string[]>(
-    profile?.position ? profile.position.split(",").map((p) => p.trim()).filter(Boolean) : []
-  );
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const togglePosition = (pos: string) => {
-    setSelectedPositions((prev) =>
-      prev.includes(pos) ? prev.filter((p) => p !== pos) : [...prev, pos]
-    );
-  };
+  const positions = profile?.position ? profile.position.split(",").map((p) => p.trim()).filter(Boolean) : [];
 
   const handleAvatarUpload = async (file: File) => {
     if (!user) return;
@@ -67,11 +49,7 @@ export default function Profil() {
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({
-        name,
-        jersey_number: jerseyNumber ? Number(jerseyNumber) : null,
-        position: selectedPositions.length > 0 ? selectedPositions.join(", ") : null,
-      })
+      .update({ name })
       .eq("id", user.id);
     if (error) {
       toast.error(error.message);
@@ -128,9 +106,9 @@ export default function Profil() {
               {profile.jersey_number && (
                 <p className="text-sm text-muted-foreground">#{profile.jersey_number}</p>
               )}
-              {selectedPositions.length > 0 && (
+              {positions.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedPositions.map((pos) => (
+                  {positions.map((pos) => (
                     <Badge key={pos} variant="secondary" className="text-xs">
                       {pos}
                     </Badge>
@@ -151,41 +129,6 @@ export default function Profil() {
             <Label>E-Mail</Label>
             <Input value={user?.email || ""} disabled />
           </div>
-
-          {/* Jersey Number */}
-          <div className="space-y-2">
-            <Label>Trikotnummer</Label>
-            <Input
-              type="number"
-              value={jerseyNumber}
-              onChange={(e) => setJerseyNumber(e.target.value)}
-              placeholder="z.B. 23"
-              className="w-24"
-            />
-          </div>
-
-          {/* Position Multi-Select */}
-          {(isCoach || profile.role === "spieler") && (
-            <div className="space-y-2">
-              <Label>Position(en)</Label>
-              <div className="flex flex-wrap gap-2">
-                {POSITIONS.map((pos) => (
-                  <button
-                    key={pos}
-                    type="button"
-                    onClick={() => togglePosition(pos)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedPositions.includes(pos)
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {pos}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <Button onClick={handleSave} disabled={saving} className="min-h-[44px]">
             {saving ? "Wird gespeichert..." : "Speichern"}
