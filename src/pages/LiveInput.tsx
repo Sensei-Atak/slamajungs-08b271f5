@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { QuickScoreButtons } from "@/components/live-input/QuickScoreButtons";
-import { ShotTracker } from "@/components/live-input/ShotTracker";
-import { StatCounter } from "@/components/live-input/StatCounter";
-import { cn } from "@/lib/utils";
+import { StartingFiveSelector } from "@/components/live-input/StartingFiveSelector";
+import { SubstitutionDialog } from "@/components/live-input/SubstitutionDialog";
+import { CompactPlayerCard } from "@/components/live-input/CompactPlayerCard";
 
 interface PlayerStat {
   player_id: string;
   name: string;
+  jersey_number: number | null;
   fw_made: number;
   fw_attempted: number;
   twop_made: number;
@@ -29,10 +29,7 @@ interface PlayerStat {
   pts_override: number | null;
 }
 
-const calcPts = (s: PlayerStat) =>
-  s.pts_override ?? s.fw_made * 1 + s.twop_made * 2 + s.threep_made * 3;
-
-const emptyStats = (): Omit<PlayerStat, "player_id" | "name"> => ({
+const emptyStats = (): Omit<PlayerStat, "player_id" | "name" | "jersey_number"> => ({
   fw_made: 0, fw_attempted: 0, twop_made: 0, twop_attempted: 0,
   threep_made: 0, threep_attempted: 0, reb: 0, ast: 0,
   blk: 0, stl: 0, to_count: 0, fouls: 0, pts_override: null,
@@ -50,11 +47,17 @@ export default function LiveInput() {
   const [saving, setSaving] = useState(false);
   const [existingGameId, setExistingGameId] = useState<string | null>(gameId || null);
 
+  // Starting Five & Substitution state
+  const [gameStarted, setGameStarted] = useState(!!gameId);
+  const [selectedFive, setSelectedFive] = useState<string[]>([]);
+  const [onCourt, setOnCourt] = useState<string[]>([]);
+  const [subOutPlayer, setSubOutPlayer] = useState<PlayerStat | null>(null);
+
   useEffect(() => {
     if (!isCoach) { navigate("/statistiken"); return; }
     const load = async () => {
       const { data: players } = await supabase
-        .from("profiles").select("id, name")
+        .from("profiles").select("id, name, jersey_number")
         .eq("role", "spieler").eq("is_active", true).order("name");
 
       if (gameId) {
@@ -62,31 +65,74 @@ export default function LiveInput() {
         if (game) { setDate(game.date); setOpponent(game.opponent); setScoreHome(game.score_home); setScoreAway(game.score_away); }
         const { data: existingStats } = await supabase.from("player_stats").select("*").eq("game_id", gameId);
         if (players && existingStats) {
-          setStats(players.map((p) => {
+          const mapped = players.map((p) => {
             const ex = existingStats.find((s) => s.player_id === p.id);
-            return { player_id: p.id, name: p.name, ...(ex ? { fw_made: ex.fw_made, fw_attempted: ex.fw_attempted, twop_made: ex.twop_made, twop_attempted: ex.twop_attempted, threep_made: ex.threep_made, threep_attempted: ex.threep_attempted, reb: ex.reb, ast: ex.ast, blk: ex.blk, stl: ex.stl, to_count: ex.to_count, fouls: ex.fouls, pts_override: ex.pts_override } : emptyStats()) };
-          }));
+            return {
+              player_id: p.id, name: p.name, jersey_number: p.jersey_number,
+              ...(ex ? {
+                fw_made: ex.fw_made, fw_attempted: ex.fw_attempted,
+                twop_made: ex.twop_made, twop_attempted: ex.twop_attempted,
+                threep_made: ex.threep_made, threep_attempted: ex.threep_attempted,
+                reb: ex.reb, ast: ex.ast, blk: ex.blk, stl: ex.stl,
+                to_count: ex.to_count, fouls: ex.fouls, pts_override: ex.pts_override,
+              } : emptyStats()),
+            };
+          });
+          setStats(mapped);
+          // For existing games, show all players who have stats
+          const withStats = existingStats.map((s) => s.player_id);
+          setOnCourt(withStats.slice(0, 5));
+          setGameStarted(true);
         }
       } else if (players) {
-        setStats(players.map((p) => ({ player_id: p.id, name: p.name, ...emptyStats() })));
+        setStats(players.map((p) => ({
+          player_id: p.id, name: p.name, jersey_number: p.jersey_number, ...emptyStats(),
+        })));
       }
     };
     load();
   }, [gameId, isCoach, navigate]);
 
-  const updateStat = useCallback((idx: number, key: string, delta: number) => {
-    setStats((prev) => prev.map((s, i) =>
-      i === idx ? { ...s, [key]: Math.max(0, (s[key as keyof PlayerStat] as number) + delta), pts_override: null } : s
-    ));
+  const toggleFiveSelection = useCallback((playerId: string) => {
+    setSelectedFive((prev) => {
+      if (prev.includes(playerId)) return prev.filter((id) => id !== playerId);
+      if (prev.length >= 5) return prev;
+      return [...prev, playerId];
+    });
   }, []);
 
-  const handleQuickScore = useCallback((idx: number, type: "fw" | "twop" | "threep") => {
-    setStats((prev) => prev.map((s, i) => {
-      if (i !== idx) return s;
-      if (type === "fw") return { ...s, fw_made: s.fw_made + 1, fw_attempted: s.fw_attempted + 1, pts_override: null };
-      if (type === "twop") return { ...s, twop_made: s.twop_made + 1, twop_attempted: s.twop_attempted + 1, pts_override: null };
-      return { ...s, threep_made: s.threep_made + 1, threep_attempted: s.threep_attempted + 1, pts_override: null };
-    }));
+  const confirmStartingFive = useCallback(() => {
+    setOnCourt(selectedFive);
+    setGameStarted(true);
+  }, [selectedFive]);
+
+  const handleSubstitute = useCallback((inPlayerId: string) => {
+    if (!subOutPlayer) return;
+    setOnCourt((prev) =>
+      prev.map((id) => (id === subOutPlayer.player_id ? inPlayerId : id))
+    );
+    setSubOutPlayer(null);
+  }, [subOutPlayer]);
+
+  const updateStat = useCallback((playerId: string, key: string, delta: number) => {
+    setStats((prev) =>
+      prev.map((s) =>
+        s.player_id === playerId
+          ? { ...s, [key]: Math.max(0, (s[key as keyof PlayerStat] as number) + delta), pts_override: null }
+          : s
+      )
+    );
+  }, []);
+
+  const handleQuickScore = useCallback((playerId: string, type: "fw" | "twop" | "threep") => {
+    setStats((prev) =>
+      prev.map((s) => {
+        if (s.player_id !== playerId) return s;
+        if (type === "fw") return { ...s, fw_made: s.fw_made + 1, fw_attempted: s.fw_attempted + 1, pts_override: null };
+        if (type === "twop") return { ...s, twop_made: s.twop_made + 1, twop_attempted: s.twop_attempted + 1, pts_override: null };
+        return { ...s, threep_made: s.threep_made + 1, threep_attempted: s.threep_attempted + 1, pts_override: null };
+      })
+    );
   }, []);
 
   const handleSave = async () => {
@@ -103,127 +149,118 @@ export default function LiveInput() {
         gId = game.id;
         setExistingGameId(gId);
       }
-      const rows = stats.map((s) => ({
-        game_id: gId!, player_id: s.player_id, fw_made: s.fw_made, fw_attempted: s.fw_attempted,
-        twop_made: s.twop_made, twop_attempted: s.twop_attempted, threep_made: s.threep_made,
-        threep_attempted: s.threep_attempted, reb: s.reb, ast: s.ast, blk: s.blk, stl: s.stl,
-        to_count: s.to_count, fouls: s.fouls, pts_override: s.pts_override,
-      }));
-      const { error: statsError } = await supabase.from("player_stats").insert(rows);
-      if (statsError) throw statsError;
+      // Only save stats for players who have any data
+      const rows = stats
+        .filter((s) => s.fw_made || s.fw_attempted || s.twop_made || s.twop_attempted ||
+          s.threep_made || s.threep_attempted || s.reb || s.ast || s.blk || s.stl ||
+          s.to_count || s.fouls || s.pts_override !== null)
+        .map((s) => ({
+          game_id: gId!, player_id: s.player_id, fw_made: s.fw_made, fw_attempted: s.fw_attempted,
+          twop_made: s.twop_made, twop_attempted: s.twop_attempted, threep_made: s.threep_made,
+          threep_attempted: s.threep_attempted, reb: s.reb, ast: s.ast, blk: s.blk, stl: s.stl,
+          to_count: s.to_count, fouls: s.fouls, pts_override: s.pts_override,
+        }));
+      if (rows.length > 0) {
+        const { error: statsError } = await supabase.from("player_stats").insert(rows);
+        if (statsError) throw statsError;
+      }
       toast.success("Spiel gespeichert!");
       navigate(`/statistiken/spiel/${gId}`);
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(false); }
   };
 
+  const courtPlayers = stats.filter((s) => onCourt.includes(s.player_id));
+  const benchPlayers = stats
+    .filter((s) => !onCourt.includes(s.player_id))
+    .map((s) => ({ player_id: s.player_id, name: s.name, jersey_number: s.jersey_number }));
+
+  // Pre-game: Starting Five selection
+  if (!gameStarted) {
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex flex-wrap gap-3 items-end">
+              <div>
+                <label className="text-xs uppercase text-muted-foreground">Datum</label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
+              </div>
+              <div>
+                <label className="text-xs uppercase text-muted-foreground">Gegner</label>
+                <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="Gegner" className="w-48" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <StartingFiveSelector
+              players={stats.map((s) => ({
+                player_id: s.player_id,
+                name: s.name,
+                jersey_number: s.jersey_number,
+              }))}
+              selected={selectedFive}
+              onToggle={toggleFiveSelection}
+              onConfirm={confirmStartingFive}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {/* Game info */}
+    <div className="space-y-3">
+      {/* Game info bar */}
       <Card>
-        <CardContent className="pt-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="text-xs uppercase text-muted-foreground">Datum</label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
+        <CardContent className="py-2 px-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-36 h-9 text-sm" />
+            <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="Gegner" className="w-40 h-9 text-sm" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium">SJ</span>
+              <Input type="number" min={0} value={scoreHome} onChange={(e) => setScoreHome(Number(e.target.value))} className="w-14 h-9 text-center text-sm" />
+              <span className="text-sm">:</span>
+              <Input type="number" min={0} value={scoreAway} onChange={(e) => setScoreAway(Number(e.target.value))} className="w-14 h-9 text-center text-sm" />
+              <span className="text-xs text-muted-foreground truncate max-w-[60px]">{opponent || "Gegner"}</span>
             </div>
-            <div>
-              <label className="text-xs uppercase text-muted-foreground">Gegner</label>
-              <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="Gegner" className="w-48" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">SJ</span>
-              <Input type="number" min={0} value={scoreHome} onChange={(e) => setScoreHome(Number(e.target.value))} className="w-16 text-center" />
-              <span>:</span>
-              <Input type="number" min={0} value={scoreAway} onChange={(e) => setScoreAway(Number(e.target.value))} className="w-16 text-center" />
-              <span className="text-sm text-muted-foreground truncate max-w-[80px]">{opponent || "Gegner"}</span>
-            </div>
-            <Button onClick={handleSave} disabled={saving} className="min-h-[44px] ml-auto">
-              {saving ? "Speichern..." : "Spiel beenden & speichern"}
+            <Button onClick={handleSave} disabled={saving} size="sm" className="ml-auto min-h-[36px]">
+              {saving ? "Speichern..." : "Spiel beenden"}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Player cards */}
-      <div className="grid gap-3">
-        {stats.map((player, pIdx) => (
-          <Card key={player.player_id} className="overflow-hidden">
-            <CardContent className="p-3">
-              {/* Player header row */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-base">{player.name}</span>
-                  <button
-                    onClick={() => {
-                      const val = prompt("PTS manuell eingeben:", String(calcPts(player)));
-                      if (val !== null) setStats((prev) => prev.map((s, i) => i === pIdx ? { ...s, pts_override: Number(val) } : s));
-                    }}
-                    className={cn(
-                      "text-2xl font-bold tabular-nums px-3 py-1 rounded-lg",
-                      "bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
-                    )}
-                  >
-                    {calcPts(player)}
-                  </button>
-                  <span className="text-xs text-muted-foreground">PTS</span>
-                </div>
-                <QuickScoreButtons onScore={(type) => handleQuickScore(pIdx, type)} />
-              </div>
-
-              {/* Shot tracking */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                <ShotTracker
-                  label="FW (1P)"
-                  color="emerald"
-                  made={player.fw_made}
-                  attempted={player.fw_attempted}
-                  onMadeChange={(d) => updateStat(pIdx, "fw_made", d)}
-                  onAttemptedChange={(d) => updateStat(pIdx, "fw_attempted", d)}
-                />
-                <ShotTracker
-                  label="2er Würfe"
-                  color="blue"
-                  made={player.twop_made}
-                  attempted={player.twop_attempted}
-                  onMadeChange={(d) => updateStat(pIdx, "twop_made", d)}
-                  onAttemptedChange={(d) => updateStat(pIdx, "twop_attempted", d)}
-                />
-                <ShotTracker
-                  label="3er Würfe"
-                  color="purple"
-                  made={player.threep_made}
-                  attempted={player.threep_attempted}
-                  onMadeChange={(d) => updateStat(pIdx, "threep_made", d)}
-                  onAttemptedChange={(d) => updateStat(pIdx, "threep_attempted", d)}
-                />
-              </div>
-
-              {/* Other stats */}
-              <div className="flex flex-wrap gap-3">
-                {([
-                  ["REB", "reb"],
-                  ["AST", "ast"],
-                  ["BLK", "blk"],
-                  ["STL", "stl"],
-                  ["TO", "to_count"],
-                  ["Fouls", "fouls"],
-                ] as const).map(([label, key]) => (
-                  <div key={key} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[10px] uppercase text-muted-foreground font-medium">{label}</span>
-                    <StatCounter
-                      value={player[key]}
-                      onIncrement={() => updateStat(pIdx, key, 1)}
-                      onDecrement={() => updateStat(pIdx, key, -1)}
-                      compact
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Active 5 players - always visible */}
+      <div className="grid gap-2">
+        {courtPlayers.map((player) => (
+          <CompactPlayerCard
+            key={player.player_id}
+            player={player}
+            onUpdateStat={(key, delta) => updateStat(player.player_id, key, delta)}
+            onQuickScore={(type) => handleQuickScore(player.player_id, type)}
+            onSubstitute={() => setSubOutPlayer(player)}
+            onOverridePts={(val) =>
+              setStats((prev) =>
+                prev.map((s) =>
+                  s.player_id === player.player_id ? { ...s, pts_override: val } : s
+                )
+              )
+            }
+          />
         ))}
       </div>
+
+      {/* Substitution dialog */}
+      <SubstitutionDialog
+        open={!!subOutPlayer}
+        onClose={() => setSubOutPlayer(null)}
+        outPlayer={subOutPlayer}
+        benchPlayers={benchPlayers}
+        onSubstitute={handleSubstitute}
+      />
     </div>
   );
 }
