@@ -188,6 +188,27 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_requests: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       player_stats: {
         Row: {
           ast: number
@@ -321,6 +342,7 @@ export type Database = {
           id: string
           is_active: boolean
           jersey_number: number | null
+          must_change_password: boolean
           name: string
           position: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -332,6 +354,7 @@ export type Database = {
           id: string
           is_active?: boolean
           jersey_number?: number | null
+          must_change_password?: boolean
           name: string
           position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -343,6 +366,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           jersey_number?: number | null
+          must_change_password?: boolean
           name?: string
           position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
