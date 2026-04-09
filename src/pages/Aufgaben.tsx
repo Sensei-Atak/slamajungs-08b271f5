@@ -5,27 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
-  Plus,
-  Check,
-  X,
-  AlertTriangle,
-  Upload,
-  Trash2,
-  Lock,
-  Play,
-  ClipboardList,
+  Plus, Check, X, AlertTriangle, Upload, Trash2, Lock, Play,
+  ClipboardList, Undo2, Youtube, Link as LinkIcon, Image, FileText,
 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Task {
   id: string;
@@ -33,6 +28,10 @@ interface Task {
   description: string | null;
   is_closed: boolean;
   created_at: string;
+  youtube_url: string | null;
+  link_url: string | null;
+  photo_url: string | null;
+  pdf_url: string | null;
 }
 
 interface Submission {
@@ -57,12 +56,18 @@ export default function Aufgaben() {
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [creating, setCreating] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoPlayerName, setVideoPlayerName] = useState("");
+  const [undoConfirm, setUndoConfirm] = useState<{ taskId: string; subId: string } | null>(null);
 
   const fetchAll = async () => {
     const [tasksRes, subsRes, playersRes] = await Promise.all([
@@ -70,54 +75,64 @@ export default function Aufgaben() {
       supabase.from("task_submissions").select("*"),
       supabase.from("profiles").select("*").eq("role", "spieler").eq("is_active", true),
     ]);
-    if (tasksRes.data) setTasks(tasksRes.data);
+    if (tasksRes.data) setTasks(tasksRes.data as Task[]);
     if (subsRes.data) setSubmissions(subsRes.data);
     if (playersRes.data) setPlayers(playersRes.data as Profile[]);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
+
+  const uploadTaskMedia = async (file: File, folder: string) => {
+    const ext = file.name.split(".").pop();
+    const path = `${folder}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("task-media").upload(path, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from("task-media").getPublicUrl(path);
+    return data.publicUrl;
+  };
 
   const createTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const { error } = await supabase.from("tasks").insert({
-      title,
-      description: description || null,
-      created_by: user.id,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
+    setCreating(true);
+    try {
+      let photoUrl: string | null = null;
+      let pdfUrl: string | null = null;
+
+      if (photoFile) photoUrl = await uploadTaskMedia(photoFile, "photos");
+      if (pdfFile) pdfUrl = await uploadTaskMedia(pdfFile, "pdfs");
+
+      const { error } = await supabase.from("tasks").insert({
+        title,
+        description: description || null,
+        created_by: user.id,
+        youtube_url: youtubeUrl || null,
+        link_url: linkUrl || null,
+        photo_url: photoUrl,
+        pdf_url: pdfUrl,
+      });
+      if (error) throw error;
+
+      setTitle(""); setDescription(""); setYoutubeUrl(""); setLinkUrl("");
+      setPhotoFile(null); setPdfFile(null); setShowCreate(false);
+      fetchAll();
+      toast.success("Aufgabe erstellt");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreating(false);
     }
-    setTitle("");
-    setDescription("");
-    setShowCreate(false);
-    fetchAll();
-    toast.success("Aufgabe erstellt");
   };
 
   const closeTask = async (taskId: string) => {
-    const { error } = await supabase
-      .from("tasks")
-      .update({ is_closed: true })
-      .eq("id", taskId);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    await supabase.from("tasks").update({ is_closed: true }).eq("id", taskId);
     fetchAll();
     toast.success("Aufgabe abgeschlossen");
   };
 
   const deleteTask = async (taskId: string) => {
-    const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    await supabase.from("tasks").delete().eq("id", taskId);
     setSelectedTask(null);
     fetchAll();
     toast.success("Aufgabe gelöscht");
@@ -130,8 +145,6 @@ export default function Aufgaben() {
     try {
       const ext = file.name.split(".").pop();
       const path = `${user.id}/${taskId}_${Date.now()}.${ext}`;
-
-      // Use XMLHttpRequest for progress tracking
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -139,17 +152,9 @@ export default function Aufgaben() {
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
+          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
         });
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload fehlgeschlagen (${xhr.status})`));
-          }
-        });
+        xhr.addEventListener("load", () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload fehlgeschlagen (${xhr.status})`)));
         xhr.addEventListener("error", () => reject(new Error("Upload fehlgeschlagen")));
         xhr.open("POST", `${supabaseUrl}/storage/v1/object/task-videos/${path}`);
         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
@@ -158,47 +163,83 @@ export default function Aufgaben() {
       });
 
       const { error } = await supabase.from("task_submissions").insert({
-        task_id: taskId,
-        player_id: user.id,
-        video_url: path,
+        task_id: taskId, player_id: user.id, video_url: path,
       });
       if (error) throw error;
       fetchAll();
       toast.success("Video hochgeladen!");
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setUploading(null);
-      setUploadProgress(0);
+    } catch (err: any) { toast.error(err.message); }
+    finally { setUploading(null); setUploadProgress(0); }
+  };
+
+  const handleUndo = async () => {
+    if (!undoConfirm) return;
+    // Delete storage file
+    const sub = submissions.find((s) => s.id === undoConfirm.subId);
+    if (sub) {
+      await supabase.storage.from("task-videos").remove([sub.video_url]);
     }
+    await supabase.from("task_submissions").delete().eq("id", undoConfirm.subId);
+    setUndoConfirm(null);
+    fetchAll();
+    toast.success("Abgabe rückgängig gemacht");
   };
 
   const openVideo = async (sub: Submission, playerName: string) => {
-    const { data } = await supabase.storage
-      .from("task-videos")
-      .createSignedUrl(sub.video_url, 3600);
-    if (data?.signedUrl) {
-      setVideoUrl(data.signedUrl);
-      setVideoPlayerName(playerName);
-    }
+    const { data } = await supabase.storage.from("task-videos").createSignedUrl(sub.video_url, 3600);
+    if (data?.signedUrl) { setVideoUrl(data.signedUrl); setVideoPlayerName(playerName); }
   };
 
   const getPlayerSubmission = (taskId: string, playerId: string) =>
     submissions.find((s) => s.task_id === taskId && s.player_id === playerId);
+  const mySubmission = (taskId: string) => user ? getPlayerSubmission(taskId, user.id) : undefined;
 
-  const mySubmission = (taskId: string) =>
-    user ? getPlayerSubmission(taskId, user.id) : undefined;
+  const openTasks = tasks.filter((t) => !t.is_closed && !mySubmission(t.id));
+  const submittedTasks = tasks.filter((t) => !!mySubmission(t.id));
 
-  const openTasks = tasks.filter(
-    (t) => !t.is_closed && !mySubmission(t.id)
+  const getYoutubeEmbedUrl = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]+)/);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  };
+
+  const TaskMediaDisplay = ({ task }: { task: Task }) => (
+    <div className="space-y-2 mt-2">
+      {task.youtube_url && (
+        <div className="aspect-video w-full max-w-md rounded-lg overflow-hidden">
+          {getYoutubeEmbedUrl(task.youtube_url) ? (
+            <iframe
+              src={getYoutubeEmbedUrl(task.youtube_url)!}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <a href={task.youtube_url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-primary hover:underline">
+              <Youtube className="h-4 w-4" /> YouTube Video
+            </a>
+          )}
+        </div>
+      )}
+      {task.link_url && (
+        <a href={task.link_url} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-2 text-sm text-primary hover:underline">
+          <LinkIcon className="h-4 w-4" /> {task.link_url}
+        </a>
+      )}
+      {task.photo_url && (
+        <img src={task.photo_url} alt="Aufgabe" className="rounded-lg max-h-48 object-cover" />
+      )}
+      {task.pdf_url && (
+        <a href={task.pdf_url} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-2 text-sm text-primary hover:underline">
+          <FileText className="h-4 w-4" /> PDF anzeigen
+        </a>
+      )}
+    </div>
   );
-  const submittedTasks = tasks.filter(
-    (t) => !!mySubmission(t.id)
-  );
 
-  if (loading) {
-    return <div className="flex justify-center py-12 text-muted-foreground">Laden...</div>;
-  }
+  if (loading) return <div className="flex justify-center py-12 text-muted-foreground">Laden...</div>;
 
   return (
     <div className="space-y-4">
@@ -206,58 +247,80 @@ export default function Aufgaben() {
         <h1 className="text-xl font-semibold">Aufgaben</h1>
         {isCoach && (
           <Button onClick={() => setShowCreate(true)} className="min-h-[44px] gap-2">
-            <Plus className="h-4 w-4" />
-            Neue Aufgabe
+            <Plus className="h-4 w-4" /> Neue Aufgabe
           </Button>
         )}
       </div>
 
       {/* Create task dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Neue Aufgabe erstellen</DialogTitle>
           </DialogHeader>
           <form onSubmit={createTask} className="space-y-3">
-            <Input
-              placeholder="Titel"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-            <Textarea
-              placeholder="Beschreibung"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <Button type="submit" className="w-full min-h-[44px]">
-              Erstellen
+            <div className="space-y-1">
+              <Label>Titel *</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Aufgabentitel" />
+            </div>
+            <div className="space-y-1">
+              <Label>Beschreibung</Label>
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschreibung..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1.5"><Youtube className="h-4 w-4" /> YouTube Link</Label>
+              <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4" /> Link</Label>
+              <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1.5"><Image className="h-4 w-4" /> Foto</Label>
+              <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
+              {photoFile && <p className="text-xs text-muted-foreground">{photoFile.name}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1.5"><FileText className="h-4 w-4" /> PDF</Label>
+              <Input type="file" accept=".pdf" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} />
+              {pdfFile && <p className="text-xs text-muted-foreground">{pdfFile.name}</p>}
+            </div>
+            <Button type="submit" className="w-full min-h-[44px]" disabled={creating}>
+              {creating ? "Wird erstellt..." : "Erstellen"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* In-app video player dialog */}
+      {/* Video player dialog */}
       <Dialog open={!!videoUrl} onOpenChange={() => setVideoUrl(null)}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle>{videoPlayerName}</DialogTitle>
           </DialogHeader>
           <div className="p-4 pt-2">
-            {videoUrl && (
-              <video
-                src={videoUrl}
-                controls
-                autoPlay
-                className="w-full rounded-lg max-h-[70vh]"
-              />
-            )}
+            {videoUrl && <video src={videoUrl} controls autoPlay className="w-full rounded-lg max-h-[70vh]" />}
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Undo confirmation */}
+      <AlertDialog open={!!undoConfirm} onOpenChange={() => setUndoConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abgabe rückgängig machen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dein hochgeladenes Video wird gelöscht und du kannst ein neues hochladen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUndo}>Rückgängig machen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {isCoach ? (
-        // Coach view: all tasks with submission status
         <div className="space-y-3">
           {tasks.length === 0 ? (
             <Card>
@@ -271,12 +334,16 @@ export default function Aufgaben() {
               <Card key={task.id} className="cursor-pointer" onClick={() => setSelectedTask(task)}>
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium">{task.title}</p>
-                      {task.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {task.description}
-                        </p>
+                      {task.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>}
+                      {(task.youtube_url || task.link_url || task.photo_url || task.pdf_url) && (
+                        <div className="flex gap-1.5 mt-1.5">
+                          {task.youtube_url && <Badge variant="outline" className="gap-1 text-xs"><Youtube className="h-3 w-3" />YT</Badge>}
+                          {task.link_url && <Badge variant="outline" className="gap-1 text-xs"><LinkIcon className="h-3 w-3" />Link</Badge>}
+                          {task.photo_url && <Badge variant="outline" className="gap-1 text-xs"><Image className="h-3 w-3" />Foto</Badge>}
+                          {task.pdf_url && <Badge variant="outline" className="gap-1 text-xs"><FileText className="h-3 w-3" />PDF</Badge>}
+                        </div>
                       )}
                     </div>
                     <Badge variant={task.is_closed ? "secondary" : "default"}>
@@ -284,9 +351,7 @@ export default function Aufgaben() {
                     </Badge>
                   </div>
                   <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>
-                      {submissions.filter((s) => s.task_id === task.id).length}/{players.length} abgegeben
-                    </span>
+                    <span>{submissions.filter((s) => s.task_id === task.id).length}/{players.length} abgegeben</span>
                   </div>
                 </CardContent>
               </Card>
@@ -294,7 +359,6 @@ export default function Aufgaben() {
           )}
         </div>
       ) : (
-        // Player view: tabs Offen / Abgegeben
         <Tabs defaultValue="offen">
           <TabsList>
             <TabsTrigger value="offen">Offen ({openTasks.length})</TabsTrigger>
@@ -302,27 +366,17 @@ export default function Aufgaben() {
           </TabsList>
           <TabsContent value="offen" className="space-y-3">
             {openTasks.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Keine offenen Aufgaben.
-                </CardContent>
-              </Card>
+              <Card><CardContent className="py-8 text-center text-muted-foreground">Keine offenen Aufgaben.</CardContent></Card>
             ) : (
               openTasks.map((task) => (
                 <Card key={task.id}>
                   <CardContent className="pt-4">
                     <p className="font-medium">{task.title}</p>
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {task.description}
-                      </p>
-                    )}
+                    {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
+                    <TaskMediaDisplay task={task} />
                     <div className="mt-3">
                       {task.is_closed ? (
-                        <Badge variant="destructive" className="gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          Verpasst
-                        </Badge>
+                        <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Verpasst</Badge>
                       ) : uploading === task.id ? (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
@@ -333,25 +387,11 @@ export default function Aufgaben() {
                         </div>
                       ) : (
                         <label className="cursor-pointer">
-                          <Button
-                            variant="outline"
-                            className="min-h-[44px] gap-2"
-                            asChild
-                          >
-                            <span>
-                              <Upload className="h-4 w-4" />
-                              Video hochladen
-                            </span>
+                          <Button variant="outline" className="min-h-[44px] gap-2" asChild>
+                            <span><Upload className="h-4 w-4" />Video hochladen</span>
                           </Button>
-                          <input
-                            type="file"
-                            accept="video/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) handleVideoUpload(task.id, f);
-                            }}
-                          />
+                          <input type="file" accept="video/*" className="hidden"
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(task.id, f); }} />
                         </label>
                       )}
                     </div>
@@ -362,32 +402,36 @@ export default function Aufgaben() {
           </TabsContent>
           <TabsContent value="abgegeben" className="space-y-3">
             {submittedTasks.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Noch keine Aufgaben abgegeben.
-                </CardContent>
-              </Card>
+              <Card><CardContent className="py-8 text-center text-muted-foreground">Noch keine Aufgaben abgegeben.</CardContent></Card>
             ) : (
-              submittedTasks.map((task) => (
-                <Card key={task.id}>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{task.title}</p>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {task.description}
-                          </p>
-                        )}
+              submittedTasks.map((task) => {
+                const sub = mySubmission(task.id)!;
+                return (
+                  <Card key={task.id}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{task.title}</p>
+                          {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Abgegeben</Badge>
+                          {!task.is_closed && (
+                            <Button
+                              variant="ghost" size="icon"
+                              className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive"
+                              onClick={() => setUndoConfirm({ taskId: task.id, subId: sub.id })}
+                            >
+                              <Undo2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <Badge variant="secondary" className="gap-1">
-                        <Check className="h-3 w-3" />
-                        Abgegeben
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      <TaskMediaDisplay task={task} />
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </TabsContent>
         </Tabs>
@@ -396,52 +440,32 @@ export default function Aufgaben() {
       {/* Coach task detail dialog */}
       {selectedTask && (
         <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{selectedTask.title}</DialogTitle>
             </DialogHeader>
-            {selectedTask.description && (
-              <p className="text-sm text-muted-foreground">{selectedTask.description}</p>
-            )}
-            <div className="space-y-2">
+            {selectedTask.description && <p className="text-sm text-muted-foreground">{selectedTask.description}</p>}
+            <TaskMediaDisplay task={selectedTask} />
+            <div className="space-y-2 mt-2">
               <p className="text-sm font-medium">Abgabestatus:</p>
               {players.map((player) => {
                 const sub = getPlayerSubmission(selectedTask.id, player.id);
                 const missed = selectedTask.is_closed && !sub;
                 return (
-                  <div
-                    key={player.id}
-                    className="flex items-center justify-between py-1.5 border-b border-border last:border-0"
-                  >
+                  <div key={player.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                     <span className="text-sm">{player.name}</span>
                     {sub ? (
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="gap-1">
-                          <Check className="h-3 w-3" />
-                          Abgegeben
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="min-h-[44px] min-w-[44px]"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openVideo(sub, player.name);
-                          }}
-                        >
+                        <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Abgegeben</Badge>
+                        <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px]"
+                          onClick={(e) => { e.stopPropagation(); openVideo(sub, player.name); }}>
                           <Play className="h-4 w-4" />
                         </Button>
                       </div>
                     ) : missed ? (
-                      <Badge variant="destructive" className="gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Verpasst
-                      </Badge>
+                      <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Verpasst</Badge>
                     ) : (
-                      <Badge variant="outline" className="gap-1">
-                        <X className="h-3 w-3" />
-                        Ausstehend
-                      </Badge>
+                      <Badge variant="outline" className="gap-1"><X className="h-3 w-3" />Ausstehend</Badge>
                     )}
                   </div>
                 );
@@ -449,22 +473,12 @@ export default function Aufgaben() {
             </div>
             <div className="flex gap-2 mt-4">
               {!selectedTask.is_closed && (
-                <Button
-                  variant="outline"
-                  onClick={() => closeTask(selectedTask.id)}
-                  className="min-h-[44px] gap-2"
-                >
-                  <Lock className="h-4 w-4" />
-                  Aufgabe abschließen
+                <Button variant="outline" onClick={() => closeTask(selectedTask.id)} className="min-h-[44px] gap-2">
+                  <Lock className="h-4 w-4" /> Aufgabe abschließen
                 </Button>
               )}
-              <Button
-                variant="destructive"
-                onClick={() => deleteTask(selectedTask.id)}
-                className="min-h-[44px] gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Löschen
+              <Button variant="destructive" onClick={() => deleteTask(selectedTask.id)} className="min-h-[44px] gap-2">
+                <Trash2 className="h-4 w-4" /> Löschen
               </Button>
             </div>
           </DialogContent>
