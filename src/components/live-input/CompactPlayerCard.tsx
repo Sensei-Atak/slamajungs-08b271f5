@@ -49,7 +49,6 @@ export function CompactPlayerCard({
       color,
       made,
       attempted,
-      madeKey,
       attemptedKey,
     }: {
       label: string;
@@ -70,7 +69,7 @@ export function CompactPlayerCard({
           <button
             type="button"
             onClick={() => onUpdateStat(attemptedKey, 1)}
-            className="w-5 h-5 rounded text-muted-foreground hover:bg-destructive/20 text-xs active:scale-90 select-none"
+            className="w-7 h-7 rounded flex items-center justify-center text-muted-foreground hover:bg-destructive/20 text-xs active:scale-90 select-none touch-manipulation"
             title="Miss"
           >
             ✗
@@ -82,12 +81,12 @@ export function CompactPlayerCard({
   );
 
   return (
-    <div className="rounded-lg border border-border bg-card p-2 space-y-1.5">
+    <div className="rounded-lg border border-border bg-card p-2 space-y-1">
       {/* Row 1: Name, PTS, Quick Score, Sub button */}
       <div className="flex items-center gap-2">
         <button
           onClick={onSubstitute}
-          className="shrink-0 p-1 rounded hover:bg-muted transition-colors"
+          className="shrink-0 p-1.5 rounded hover:bg-muted transition-colors touch-manipulation"
           title="Auswechseln"
         >
           <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
@@ -106,8 +105,8 @@ export function CompactPlayerCard({
             if (val !== null) onOverridePts(Number(val));
           }}
           className={cn(
-            "ml-auto text-xl font-bold tabular-nums px-2 py-0.5 rounded-md shrink-0",
-            "bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+            "ml-auto text-lg font-bold tabular-nums px-2 py-0.5 rounded-md shrink-0",
+            "bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer touch-manipulation"
           )}
         >
           {pts}
@@ -116,33 +115,35 @@ export function CompactPlayerCard({
       </div>
 
       {/* Row 2: Shot stats + Other stats */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <ShotMini
-          label="FW"
-          color="text-emerald-600 dark:text-emerald-400"
-          made={player.fw_made}
-          attempted={player.fw_attempted}
-          madeKey="fw_made"
-          attemptedKey="fw_attempted"
-        />
-        <ShotMini
-          label="2P"
-          color="text-blue-600 dark:text-blue-400"
-          made={player.twop_made}
-          attempted={player.twop_attempted}
-          madeKey="twop_made"
-          attemptedKey="twop_attempted"
-        />
-        <ShotMini
-          label="3P"
-          color="text-purple-600 dark:text-purple-400"
-          made={player.threep_made}
-          attempted={player.threep_attempted}
-          madeKey="threep_made"
-          attemptedKey="threep_attempted"
-        />
+      <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center gap-2 shrink-0">
+          <ShotMini
+            label="FW"
+            color="text-emerald-600 dark:text-emerald-400"
+            made={player.fw_made}
+            attempted={player.fw_attempted}
+            madeKey="fw_made"
+            attemptedKey="fw_attempted"
+          />
+          <ShotMini
+            label="2P"
+            color="text-blue-600 dark:text-blue-400"
+            made={player.twop_made}
+            attempted={player.twop_attempted}
+            madeKey="twop_made"
+            attemptedKey="twop_attempted"
+          />
+          <ShotMini
+            label="3P"
+            color="text-purple-600 dark:text-purple-400"
+            made={player.threep_made}
+            attempted={player.threep_attempted}
+            madeKey="threep_made"
+            attemptedKey="threep_attempted"
+          />
+        </div>
 
-        <div className="flex items-center gap-2 ml-auto flex-wrap">
+        <div className="flex items-center gap-1.5 ml-auto shrink-0">
           {(
             [
               ["REB", "reb"],

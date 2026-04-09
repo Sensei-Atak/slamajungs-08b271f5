@@ -15,13 +15,13 @@ export function StatCounter({ value, onIncrement, onDecrement, compact }: StatCo
         type="button"
         onClick={onDecrement}
         className={cn(
-          "rounded-md flex items-center justify-center",
+          "rounded-md flex items-center justify-center touch-manipulation",
           "bg-muted text-muted-foreground hover:bg-destructive/20 hover:text-destructive",
           "active:scale-90 transition-all select-none",
-          compact ? "w-7 h-7" : "w-8 h-8"
+          compact ? "w-8 h-8" : "w-10 h-10"
         )}
       >
-        <Minus className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
+        <Minus className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
       </button>
       <span className={cn(
         "tabular-nums text-center font-semibold",
@@ -33,13 +33,13 @@ export function StatCounter({ value, onIncrement, onDecrement, compact }: StatCo
         type="button"
         onClick={onIncrement}
         className={cn(
-          "rounded-md flex items-center justify-center",
+          "rounded-md flex items-center justify-center touch-manipulation",
           "bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary",
           "active:scale-90 transition-all select-none",
-          compact ? "w-7 h-7" : "w-8 h-8"
+          compact ? "w-8 h-8" : "w-10 h-10"
         )}
       >
-        <Plus className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
+        <Plus className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
       </button>
     </div>
   );
