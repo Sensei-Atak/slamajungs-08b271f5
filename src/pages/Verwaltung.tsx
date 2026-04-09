@@ -651,6 +651,14 @@ export default function Verwaltung() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Schedule game dialog */}
+      <ScheduleGameDialog
+        open={showSchedule}
+        onOpenChange={setShowSchedule}
+        onCreated={fetchAll}
+        players={players}
+      />
     </div>
   );
 }
