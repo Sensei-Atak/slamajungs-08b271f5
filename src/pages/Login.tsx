@@ -33,36 +33,17 @@ export default function Login() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) {
+      toast.error("Bitte gib deine E-Mail ein");
+      return;
+    }
     setLoading(true);
     try {
-      // Look up player_id by email from profiles
-      // We need to find the user by email - query profiles won't have email,
-      // so we insert a request after finding the user via a workaround:
-      // Try to sign in with wrong password to check if user exists, or just
-      // search profiles by name. Actually, we need a different approach.
-      // Let's just create a request using the email to look up the auth user.
-      // Since we can't query auth.users from client, we'll use a simple approach:
-      // The player enters their email, we look up profiles to find a matching user.
-      // But profiles don't store email. So we need to attempt a lookup differently.
-      
-      // Simplest: sign in attempt will fail but we can use the email to find the user
-      // via an edge function or just let the player submit the request with their email
-      // and the coach matches it manually.
-      
-      // For now: create a password_reset_requests entry. We need the player's user ID.
-      // We'll try to get it by checking if there's a session or by matching email.
-      // Since the player is NOT logged in, we can't use auth.uid().
-      // 
-      // Solution: Use a public-facing approach - store email in the request,
-      // but our table only has player_id. Let's use a workaround:
-      // Sign up won't work. Let's just show a message to contact the coach.
-      
-      // Actually the simplest working approach: the player is not authenticated,
-      // so they can't insert into password_reset_requests (RLS requires auth).
-      // Let's just show them a message to contact their coach directly.
-      
+      const { data, error } = await supabase.functions.invoke("request-password-reset", {
+        body: { email },
+      });
+      if (error) throw error;
       setResetSent(true);
-      toast.success("Bitte wende dich an deinen Coach für ein neues Passwort.");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
