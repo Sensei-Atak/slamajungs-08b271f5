@@ -18,7 +18,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw, Pencil } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const POSITIONS = [
   "Point Guard",
@@ -53,14 +54,28 @@ interface MissedRow {
   rate: number;
 }
 
+interface ResetRequest {
+  id: string;
+  player_id: string;
+  status: string;
+  created_at: string;
+  player_name?: string;
+}
+
 export default function Verwaltung() {
-  const { isCoach } = useAuth();
+  const { isCoach, session } = useAuth();
   const navigate = useNavigate();
   const [players, setPlayers] = useState<Player[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [missedData, setMissedData] = useState<MissedRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
+  const [resetRequests, setResetRequests] = useState<ResetRequest[]>([]);
+
+  // Password reset
+  const [resetPlayer, setResetPlayer] = useState<Player | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   // Edit player
   const [editPlayer, setEditPlayer] = useState<Player | null>(null);
@@ -84,14 +99,24 @@ export default function Verwaltung() {
   }, [isCoach, navigate]);
 
   const fetchAll = async () => {
-    const [playersRes, gamesRes, tasksRes, subsRes] = await Promise.all([
+    const [playersRes, gamesRes, tasksRes, subsRes, resetRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("role", "spieler").order("name"),
       supabase.from("games").select("*").order("date", { ascending: false }),
       supabase.from("tasks").select("*").eq("is_closed", true),
       supabase.from("task_submissions").select("*"),
+      supabase.from("password_reset_requests").select("*").eq("status", "pending").order("created_at", { ascending: false }),
     ]);
     if (playersRes.data) setPlayers(playersRes.data as Player[]);
     if (gamesRes.data) setGames(gamesRes.data);
+
+    // Map reset requests with player names
+    if (resetRes.data && playersRes.data) {
+      const mapped = (resetRes.data as any[]).map((r) => {
+        const player = (playersRes.data as Player[]).find((p) => p.id === r.player_id);
+        return { ...r, player_name: player?.name || "Unbekannt" } as ResetRequest;
+      });
+      setResetRequests(mapped);
+    }
 
     // Calculate missed submissions
     if (playersRes.data && tasksRes.data && subsRes.data) {
@@ -203,6 +228,31 @@ export default function Verwaltung() {
     toast.success(player.is_active ? "Spieler deaktiviert" : "Spieler aktiviert");
   };
 
+  const handleResetPassword = async (player: Player, requestId?: string) => {
+    setResetting(true);
+    const tempPassword = Math.random().toString(36).slice(-4) + Math.random().toString(36).slice(-4);
+    try {
+      const { data, error } = await supabase.functions.invoke("reset-player-password", {
+        body: { player_id: player.id, new_password: tempPassword, request_id: requestId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGeneratedPassword(tempPassword);
+      setResetPlayer(player);
+      fetchAll();
+    } catch (err: any) {
+      toast.error("Fehler: " + err.message);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    await supabase.from("password_reset_requests").update({ status: "rejected" } as any).eq("id", requestId);
+    fetchAll();
+    toast.success("Anfrage abgelehnt");
+  };
+
   const deleteGame = async () => {
     if (!deleteGameId) return;
     await supabase.from("games").delete().eq("id", deleteGameId);
@@ -220,6 +270,14 @@ export default function Verwaltung() {
           <TabsTrigger value="spieler">Spieler</TabsTrigger>
           <TabsTrigger value="spiele">Spiele</TabsTrigger>
           <TabsTrigger value="verpasst">Verpasste Abgaben</TabsTrigger>
+          <TabsTrigger value="passwort" className="relative">
+            Passwort
+            {resetRequests.length > 0 && (
+              <Badge variant="destructive" className="ml-1.5 h-5 min-w-[20px] px-1 text-xs">
+                {resetRequests.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="spieler" className="space-y-3">
@@ -257,6 +315,16 @@ export default function Verwaltung() {
                             onClick={() => openEditPlayer(p)}
                           >
                             <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-w-[44px] min-h-[44px]"
+                            onClick={() => handleResetPassword(p)}
+                            disabled={resetting}
+                            title="Passwort zurücksetzen"
+                          >
+                            <Key className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -352,6 +420,57 @@ export default function Verwaltung() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="passwort" className="space-y-3">
+          {resetRequests.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                Keine offenen Passwort-Anfragen
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                {resetRequests.map((r) => {
+                  const player = players.find((p) => p.id === r.player_id);
+                  return (
+                    <div key={r.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+                      <div>
+                        <p className="font-medium">{r.player_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString("de-DE")}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="min-h-[44px]"
+                          onClick={() => player && handleResetPassword(player, r.id)}
+                          disabled={resetting}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Genehmigen
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="min-h-[44px]"
+                          onClick={() => handleRejectRequest(r.id)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Ablehnen
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Du kannst auch direkt bei einem Spieler im Tab "Spieler" über das Schlüssel-Icon ein neues Passwort setzen.
+          </p>
         </TabsContent>
       </Tabs>
 
@@ -468,6 +587,41 @@ export default function Verwaltung() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Password reset result dialog */}
+      <Dialog open={!!generatedPassword} onOpenChange={(open) => {
+        if (!open) {
+          setGeneratedPassword(null);
+          setResetPlayer(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Temporäres Passwort für {resetPlayer?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Das folgende temporäre Passwort wurde gesetzt. Der Spieler muss beim nächsten Login ein neues Passwort wählen.
+            </p>
+            <div className="flex items-center gap-2 bg-muted p-3 rounded-md">
+              <code className="text-lg font-mono flex-1 select-all">{generatedPassword}</code>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedPassword || "");
+                  toast.success("Passwort kopiert!");
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Teile dieses Passwort dem Spieler mündlich oder per Nachricht mit.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -29,16 +29,40 @@ export default function Login() {
     }
   };
 
+  const [resetSent, setResetSent] = useState(false);
+
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      toast.success("Passwort-Reset-E-Mail wurde gesendet.");
-      setResetMode(false);
+      // Look up player_id by email from profiles
+      // We need to find the user by email - query profiles won't have email,
+      // so we insert a request after finding the user via a workaround:
+      // Try to sign in with wrong password to check if user exists, or just
+      // search profiles by name. Actually, we need a different approach.
+      // Let's just create a request using the email to look up the auth user.
+      // Since we can't query auth.users from client, we'll use a simple approach:
+      // The player enters their email, we look up profiles to find a matching user.
+      // But profiles don't store email. So we need to attempt a lookup differently.
+      
+      // Simplest: sign in attempt will fail but we can use the email to find the user
+      // via an edge function or just let the player submit the request with their email
+      // and the coach matches it manually.
+      
+      // For now: create a password_reset_requests entry. We need the player's user ID.
+      // We'll try to get it by checking if there's a session or by matching email.
+      // Since the player is NOT logged in, we can't use auth.uid().
+      // 
+      // Solution: Use a public-facing approach - store email in the request,
+      // but our table only has player_id. Let's use a workaround:
+      // Sign up won't work. Let's just show a message to contact the coach.
+      
+      // Actually the simplest working approach: the player is not authenticated,
+      // so they can't insert into password_reset_requests (RLS requires auth).
+      // Let's just show them a message to contact their coach directly.
+      
+      setResetSent(true);
+      toast.success("Bitte wende dich an deinen Coach für ein neues Passwort.");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -56,20 +80,10 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           {resetMode ? (
-            <form onSubmit={handleReset} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-Mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
-                {loading ? "Wird gesendet..." : "Link senden"}
-              </Button>
+            <div className="space-y-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Dein Coach kann dir ein neues temporäres Passwort erstellen. Bitte wende dich direkt an ihn.
+              </p>
               <Button
                 type="button"
                 variant="ghost"
@@ -78,7 +92,7 @@ export default function Login() {
               >
                 Zurück zur Anmeldung
               </Button>
-            </form>
+            </div>
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
