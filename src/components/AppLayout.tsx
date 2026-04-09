@@ -138,7 +138,14 @@ export default function AppLayout() {
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <div className="relative">
+                <item.icon className="h-5 w-5" />
+                {item.path === "/verwaltung" && pendingResets > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[9px] rounded-full h-4 min-w-[16px] flex items-center justify-center px-0.5">
+                    {pendingResets}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px]">{item.label}</span>
             </button>
           );
