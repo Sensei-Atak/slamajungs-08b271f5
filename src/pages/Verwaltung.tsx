@@ -587,6 +587,41 @@ export default function Verwaltung() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Password reset result dialog */}
+      <Dialog open={!!generatedPassword} onOpenChange={(open) => {
+        if (!open) {
+          setGeneratedPassword(null);
+          setResetPlayer(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Temporäres Passwort für {resetPlayer?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Das folgende temporäre Passwort wurde gesetzt. Der Spieler muss beim nächsten Login ein neues Passwort wählen.
+            </p>
+            <div className="flex items-center gap-2 bg-muted p-3 rounded-md">
+              <code className="text-lg font-mono flex-1 select-all">{generatedPassword}</code>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedPassword || "");
+                  toast.success("Passwort kopiert!");
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Teile dieses Passwort dem Spieler mündlich oder per Nachricht mit.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
