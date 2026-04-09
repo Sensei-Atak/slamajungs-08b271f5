@@ -1,25 +1,29 @@
 
 
-## Mobile-Responsive Tabellen fixen
+## Fix: Mobile-Overflow auf Verwaltung und Statistiken
 
 ### Problem
-Die Tabellen auf den Seiten Verwaltung, Statistiken, GameSummary und PlayerStats sind zu breit fuer Mobilgeraete. `overflow-x-auto` erlaubt zwar horizontales Scrollen, aber die Tabelle selbst hat eine feste Mindestbreite, die ueber den Viewport hinausragt, was zum Rauszoomen zwingt.
+Zwei Ursachen fuer das Rauszoomen:
+
+1. **Verwaltung - TabsList**: Die 4 Tabs ("Spieler", "Spiele", "Verpasste Abgaben", "Passwort") passen nicht in 390px Breite. Die `TabsList` hat `inline-flex` und laeuft ueber den Viewport hinaus.
+
+2. **Statistiken - Angesetzte Spiele**: Die Cards mit Gegner-Name, Datum, Uhrzeit, Ort in einer Zeile plus "Live-Statistik" Button koennen bei langen Gegnernamen oder Ort-Angaben ueberlaufen.
 
 ### Loesung
-Auf mobilen Bildschirmen die Tabellen durch **Card-basierte Listen** ersetzen. Jeder Spieler/Eintrag wird als kompakte Karte dargestellt statt als Tabellenzeile. Die Desktop-Tabelle bleibt fuer groessere Bildschirme erhalten.
-
-### Betroffene Dateien
 
 | Datei | Aenderung |
 |-------|-----------|
-| `src/pages/Statistiken.tsx` | Spieler-Durchschnitte: Mobile-Ansicht als klickbare Karten mit den wichtigsten Stats (PPG, RPG, APG). Volle Tabelle nur ab `md:` |
-| `src/pages/Verwaltung.tsx` | Spieler-Tab: Mobile-Karten mit Name, Nr, Position, Status + Action-Buttons. Spiele-Tab: Mobile-Karten. Verpasst-Tab: Mobile-Karten. Desktop bleibt Tabelle |
-| `src/pages/GameSummary.tsx` | Mobile: Spieler-Karten mit Stats in Grid. Desktop: Tabelle |
-| `src/pages/PlayerStats.tsx` | Mobile: Spiel-Karten mit Stats in Grid. Desktop: Tabelle. Saisondurchschnitt-Grid von `grid-cols-5` auf `grid-cols-3 sm:grid-cols-5` |
+| `src/pages/Verwaltung.tsx` | TabsList auf Mobile: `w-full` und `flex-wrap` oder `grid grid-cols-2` damit die Tabs umbrechen statt ueberlaufen. "Verpasste Abgaben" auf Mobile kuerzen zu "Verpasst". |
+| `src/pages/Statistiken.tsx` | Angesetzte-Spiele-Cards: Metadata-Zeile mit `flex-wrap` versehen. "Live-Statistik" Button auf Mobile nur als Icon-Button ohne Text. `min-w-0` und `overflow-hidden` auf den Text-Container. |
 
-### Umsetzung
-- Jede Seite bekommt ein Pattern: `<div className="hidden md:block">` fuer die Tabelle und `<div className="md:hidden">` fuer die Mobile-Karten
-- Mobile-Karten zeigen die wichtigsten Infos kompakt in einem Grid-Layout
-- Klick-Navigation bleibt erhalten (z.B. Spieler anklicken -> Spielerdetails)
-- Keine neuen Komponenten noetig, alles inline mit bestehenden UI-Komponenten (Card, Badge)
+### Details
+
+**Verwaltung TabsList** (Zeile 274-286):
+- `TabsList` bekommt `className="w-full grid grid-cols-4"` auf Mobile bzw `flex-wrap`
+- Alternativ: Tab-Labels auf Mobile kuerzen ("Verpasst" statt "Verpasste Abgaben")
+
+**Statistiken Cards** (Zeile 161-193):
+- Textcontainer bekommt `min-w-0` damit truncation funktioniert
+- Metadata `flex-wrap` fuer lange Ortsangaben
+- "Live-Statistik" Button auf Mobile: nur Play-Icon, kein Text
 
