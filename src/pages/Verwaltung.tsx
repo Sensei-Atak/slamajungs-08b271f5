@@ -292,7 +292,43 @@ export default function Verwaltung() {
               Spieler hinzufügen
             </Button>
           </div>
-          <Card>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-2">
+            {players.map((p) => (
+              <Card key={p.id} className={!p.is_active ? "opacity-50" : ""}>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">{p.name}</span>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>#{p.jersey_number ?? "–"}</span>
+                        <span>·</span>
+                        <span>{p.position || "–"}</span>
+                        <span>·</span>
+                        <Badge variant={p.is_active ? "default" : "secondary"} className="text-xs">
+                          {p.is_active ? "Aktiv" : "Inaktiv"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => openEditPlayer(p)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => handleResetPassword(p)} disabled={resetting}>
+                        <Key className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => toggleActive(p)}>
+                        {p.is_active ? <UserX className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden md:block">
             <CardContent className="pt-4 overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -313,35 +349,14 @@ export default function Verwaltung() {
                       <TableCell>{p.is_active ? "Aktiv" : "Inaktiv"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="min-w-[44px] min-h-[44px]"
-                            onClick={() => openEditPlayer(p)}
-                          >
+                          <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => openEditPlayer(p)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="min-w-[44px] min-h-[44px]"
-                            onClick={() => handleResetPassword(p)}
-                            disabled={resetting}
-                            title="Passwort zurücksetzen"
-                          >
+                          <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => handleResetPassword(p)} disabled={resetting} title="Passwort zurücksetzen">
                             <Key className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="min-w-[44px] min-h-[44px]"
-                            onClick={() => toggleActive(p)}
-                          >
-                            {p.is_active ? (
-                              <UserX className="h-4 w-4" />
-                            ) : (
-                              <RotateCcw className="h-4 w-4" />
-                            )}
+                          <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => toggleActive(p)}>
+                            {p.is_active ? <UserX className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
                           </Button>
                         </div>
                       </TableCell>
