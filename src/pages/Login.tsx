@@ -36,8 +36,19 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
+      let loginEmail = email;
+      // If no @ symbol, treat as username
+      if (!email.includes("@")) {
+        const { data, error } = await supabase.rpc("get_email_by_username", { p_username: email });
+        if (error || !data) {
+          toast.error("Benutzername nicht gefunden");
+          setLoading(false);
+          return;
+        }
+        loginEmail = data as string;
+      }
       localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-      await signIn(email, password);
+      await signIn(loginEmail, password);
       navigate("/feed");
     } catch (err: any) {
       toast.error("Anmeldung fehlgeschlagen: " + err.message);
@@ -180,8 +191,8 @@ export default function Login() {
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">E-Mail</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Label htmlFor="email">E-Mail oder Benutzername</Label>
+                <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="E-Mail oder Benutzername" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Passwort</Label>

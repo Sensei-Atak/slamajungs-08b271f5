@@ -37,6 +37,7 @@ interface Player {
   jersey_number: number | null;
   position: string | null;
   is_active: boolean;
+  username: string | null;
 }
 
 interface Game {
@@ -306,6 +307,7 @@ export default function Verwaltung() {
                         <span>#{p.jersey_number ?? "–"}</span>
                         <span>·</span>
                         <span>{p.position || "–"}</span>
+                        {p.username && (<><span>·</span><span>@{p.username}</span></>)}
                         <span>·</span>
                         <Badge variant={p.is_active ? "default" : "secondary"} className="text-xs">
                           {p.is_active ? "Aktiv" : "Inaktiv"}
@@ -338,6 +340,7 @@ export default function Verwaltung() {
                     <TableHead>Name</TableHead>
                     <TableHead className="text-center">Nr.</TableHead>
                     <TableHead>Position</TableHead>
+                    <TableHead>Benutzername</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead />
                   </TableRow>
@@ -348,6 +351,7 @@ export default function Verwaltung() {
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell className="text-center">{p.jersey_number ?? "–"}</TableCell>
                       <TableCell>{p.position || "–"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.username ? `@${p.username}` : "–"}</TableCell>
                       <TableCell>{p.is_active ? "Aktiv" : "Inaktiv"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
