@@ -1,30 +1,27 @@
 
 
-## Registrierung nur mit Team-Code schuetzen
+## In-App Benachrichtigungen bei neuen Kommentaren
 
 ### Uebersicht
-
-Beim Registrieren muessen Spieler einen geheimen Team-Code eingeben (z.B. "SlamaJama2026"). Ohne den richtigen Code ist keine Registrierung moeglich. Der Code wird serverseitig validiert, damit er nicht umgangen werden kann.
+Spieler sehen ein Glocken-Symbol in der Navigation. Wenn jemand ihren Beitrag kommentiert, erscheint dort ein roter Zaehler. Per Klick oeffnet sich eine Liste der letzten Benachrichtigungen.
 
 ### Aenderungen
 
-**1. Datenbank: Team-Code als App-Setting speichern**
-- Neue Tabelle `app_settings` mit key/value-Paaren
-- Eintrag `team_invite_code` mit dem gewuenschten Code
-- RLS: Nur Coach kann den Code lesen und aendern
-- Security-Definer-Funktion `verify_invite_code(code text)` die `true/false` zurueckgibt -- so wird der Code nie an den Client gesendet
+**1. Datenbank**
+- Neue Tabelle `notifications` mit Spalten: `id`, `user_id` (Empfaenger), `type` (z.B. "comment"), `title`, `body`, `post_id`, `is_read`, `created_at`
+- RLS: Nutzer koennen nur eigene Benachrichtigungen lesen und als gelesen markieren
+- Datenbank-Funktion + Trigger auf `post_comments` INSERT: ermittelt den Besitzer des Beitrags (aus `feed_posts` oder `meals` je nach post_id-Format) und erstellt eine Notification -- aber nicht, wenn man seinen eigenen Beitrag kommentiert
 
-**2. `src/pages/Login.tsx`**
-- Neues Eingabefeld "Team-Code" im Registrierungsformular
-- Vor dem `signUp`-Aufruf wird der Code ueber `supabase.rpc("verify_invite_code")` geprueft
-- Fehlermeldung wenn der Code falsch ist
+**2. Notification-Dropdown (`src/components/NotificationBell.tsx`)**
+- Glocken-Icon mit Badge fuer ungelesene Anzahl
+- Popover mit Liste der letzten Benachrichtigungen (Name, Vorschau, Zeitstempel)
+- Klick auf eine Benachrichtigung markiert sie als gelesen
+- "Alle gelesen"-Button
 
-**3. `src/pages/Verwaltung.tsx`**
-- Neuer Bereich fuer den Coach: "Team-Code aendern"
-- Einfaches Textfeld + Speichern-Button
+**3. AppLayout anpassen**
+- NotificationBell in die Desktop-Sidebar-Kopfzeile und Mobile-Header einbauen
 
 ### Sicherheit
-- Der Code wird NIE an den Client uebertragen -- nur eine `true/false`-Antwort
-- Die Validierung erfolgt serverseitig ueber eine Security-Definer-Funktion
-- Nur der Coach kann den Code einsehen und aendern
+- RLS stellt sicher, dass Spieler nur ihre eigenen Benachrichtigungen sehen
+- Der Trigger laeuft als SECURITY DEFINER, damit er auf beide Tabellen zugreifen kann
 
