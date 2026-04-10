@@ -75,6 +75,7 @@ export default function Verwaltung() {
   const [missedData, setMissedData] = useState<MissedRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showDBBImport, setShowDBBImport] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
   const [resetRequests, setResetRequests] = useState<ResetRequest[]>([]);
 
