@@ -749,6 +749,14 @@ export default function Verwaltung() {
         onCreated={fetchAll}
         players={players}
       />
+
+      {/* DBB Import dialog */}
+      <DBBImportDialog
+        open={showDBBImport}
+        onOpenChange={setShowDBBImport}
+        onImported={fetchAll}
+        existingGames={games.map((g) => ({ date: g.date, opponent: g.opponent }))}
+      />
     </div>
   );
 }
