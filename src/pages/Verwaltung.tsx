@@ -616,6 +616,23 @@ export default function Verwaltung() {
             Du kannst auch direkt bei einem Spieler im Tab "Spieler" über das Schlüssel-Icon ein neues Passwort setzen.
           </p>
         </TabsContent>
+
+        <TabsContent value="teamcode" className="space-y-3">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Spieler müssen diesen Code bei der Registrierung eingeben. Ändere ihn regelmäßig, um unbefugten Zugang zu verhindern.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="inviteCode">Aktueller Team-Code</Label>
+                <Input id="inviteCode" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+              </div>
+              <Button onClick={saveInviteCode} disabled={inviteCodeLoading} className="min-h-[44px]">
+                {inviteCodeLoading ? "Speichern..." : "Code speichern"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Add player dialog */}
