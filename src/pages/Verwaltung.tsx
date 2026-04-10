@@ -18,8 +18,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X, Calendar, Clock, MapPin } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X, Calendar, Clock, MapPin, Download } from "lucide-react";
 import ScheduleGameDialog from "@/components/verwaltung/ScheduleGameDialog";
+import DBBImportDialog from "@/components/verwaltung/DBBImportDialog";
 import { Badge } from "@/components/ui/badge";
 
 const POSITIONS = [
