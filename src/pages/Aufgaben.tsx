@@ -445,7 +445,8 @@ export default function Aufgaben() {
               <Card><CardContent className="py-8 text-center text-muted-foreground">Noch keine Aufgaben abgegeben.</CardContent></Card>
             ) : (
               submittedTasks.map((task) => {
-                const sub = mySubmission(task.id)!;
+                const sub = mySubmission(task.id);
+                const isWatch = task.requires_watch && myWatchCompleted(task);
                 return (
                   <Card key={task.id}>
                     <CardContent className="pt-4">
@@ -455,8 +456,10 @@ export default function Aufgaben() {
                           {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Abgegeben</Badge>
-                          {!task.is_closed && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Check className="h-3 w-3" />{isWatch ? "Geschaut" : "Abgegeben"}
+                          </Badge>
+                          {!task.is_closed && sub && (
                             <Button
                               variant="ghost" size="icon"
                               className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive"
