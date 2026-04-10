@@ -51,24 +51,26 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/change-password" element={<ChangePasswordRoute />} />
-            <Route path="/" element={<Navigate to="/feed" replace />} />
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/aufgaben" element={<Aufgaben />} />
-              <Route path="/statistiken" element={<Statistiken />} />
-              <Route path="/statistiken/live" element={<LiveInput />} />
-              <Route path="/statistiken/live/:gameId" element={<LiveInput />} />
-              <Route path="/statistiken/spiel/:gameId" element={<GameSummary />} />
-              <Route path="/statistiken/spieler/:playerId" element={<PlayerStats />} />
-              <Route path="/verwaltung" element={<Verwaltung />} />
-              <Route path="/profil" element={<Profil />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-muted-foreground">Laden...</div>}>
+            <Routes>
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/change-password" element={<ChangePasswordRoute />} />
+              <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/feed" element={<Feed />} />
+                <Route path="/aufgaben" element={<Aufgaben />} />
+                <Route path="/statistiken" element={<Statistiken />} />
+                <Route path="/statistiken/live" element={<LiveInput />} />
+                <Route path="/statistiken/live/:gameId" element={<LiveInput />} />
+                <Route path="/statistiken/spiel/:gameId" element={<GameSummary />} />
+                <Route path="/statistiken/spieler/:playerId" element={<PlayerStats />} />
+                <Route path="/verwaltung" element={<Verwaltung />} />
+                <Route path="/profil" element={<Profil />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
