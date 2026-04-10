@@ -98,13 +98,33 @@ export default function Verwaltung() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Team invite code
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCodeLoading, setInviteCodeLoading] = useState(false);
+
   useEffect(() => {
     if (!isCoach) {
       navigate("/feed");
       return;
     }
     fetchAll();
+    fetchInviteCode();
   }, [isCoach, navigate]);
+
+  const fetchInviteCode = async () => {
+    const { data } = await supabase.from("app_settings").select("value").eq("key", "team_invite_code").single();
+    if (data) setInviteCode(data.value);
+  };
+
+  const saveInviteCode = async () => {
+    if (!inviteCode.trim()) { toast.error("Code darf nicht leer sein"); return; }
+    setInviteCodeLoading(true);
+    const { error } = await supabase.from("app_settings").update({ value: inviteCode.trim() }).eq("key", "team_invite_code");
+    if (error) toast.error("Fehler beim Speichern");
+    else toast.success("Team-Code gespeichert");
+    setInviteCodeLoading(false);
+  };
 
   const fetchAll = async () => {
     const [playersRes, gamesRes, tasksRes, subsRes, resetRes] = await Promise.all([
