@@ -77,15 +77,12 @@ export default function Aufgaben() {
   const [undoConfirm, setUndoConfirm] = useState<{ taskId: string; subId: string } | null>(null);
 
   const fetchAll = async () => {
-    const queries: Promise<any>[] = [
+    const [tasksRes, subsRes, playersRes, watchRes] = await Promise.all([
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("task_submissions").select("*"),
       supabase.from("profiles").select("*").eq("role", "spieler").eq("is_active", true),
-    ];
-    // Coach can see all watch progress
-    queries.push(supabase.from("task_watch_progress").select("*"));
-
-    const [tasksRes, subsRes, playersRes, watchRes] = await Promise.all(queries);
+      supabase.from("task_watch_progress").select("*"),
+    ]);
     if (tasksRes.data) setTasks(tasksRes.data as Task[]);
     if (subsRes.data) setSubmissions(subsRes.data);
     if (playersRes.data) setPlayers(playersRes.data as Profile[]);
