@@ -14,8 +14,10 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Plus, Check, X, AlertTriangle, Upload, Trash2, Lock, Play,
-  ClipboardList, Undo2, Youtube, Link as LinkIcon, Image, FileText,
+  ClipboardList, Undo2, Youtube, Link as LinkIcon, Image, FileText, Eye,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import YouTubeWatchTask from "@/components/feed/YouTubeWatchTask";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -34,6 +36,7 @@ interface Task {
   link_url: string | null;
   photo_url: string | null;
   pdf_url: string | null;
+  requires_watch: boolean;
 }
 
 interface Submission {
@@ -63,6 +66,8 @@ export default function Aufgaben() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
+  const [requiresWatch, setRequiresWatch] = useState(false);
+  const [watchProgress, setWatchProgress] = useState<any[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -72,14 +77,16 @@ export default function Aufgaben() {
   const [undoConfirm, setUndoConfirm] = useState<{ taskId: string; subId: string } | null>(null);
 
   const fetchAll = async () => {
-    const [tasksRes, subsRes, playersRes] = await Promise.all([
+    const [tasksRes, subsRes, playersRes, watchRes] = await Promise.all([
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("task_submissions").select("*"),
       supabase.from("profiles").select("*").eq("role", "spieler").eq("is_active", true),
+      supabase.from("task_watch_progress").select("*"),
     ]);
     if (tasksRes.data) setTasks(tasksRes.data as Task[]);
     if (subsRes.data) setSubmissions(subsRes.data);
     if (playersRes.data) setPlayers(playersRes.data as Profile[]);
+    if (watchRes.data) setWatchProgress(watchRes.data);
     setLoading(false);
   };
 
@@ -112,11 +119,12 @@ export default function Aufgaben() {
         link_url: linkUrl || null,
         photo_url: photoUrl,
         pdf_url: pdfUrl,
-      });
+        requires_watch: youtubeUrl ? requiresWatch : false,
+      } as any);
       if (error) throw error;
 
       setTitle(""); setDescription(""); setYoutubeUrl(""); setLinkUrl("");
-      setPhotoFile(null); setPdfFile(null); setShowCreate(false);
+      setPhotoFile(null); setPdfFile(null); setShowCreate(false); setRequiresWatch(false);
       fetchAll();
       toast.success("Aufgabe erstellt");
     } catch (err: any) {
@@ -193,10 +201,18 @@ export default function Aufgaben() {
 
   const getPlayerSubmission = (taskId: string, playerId: string) =>
     submissions.find((s) => s.task_id === taskId && s.player_id === playerId);
+  const getPlayerWatchProgress = (taskId: string, playerId: string) =>
+    watchProgress.find((w: any) => w.task_id === taskId && w.player_id === playerId);
   const mySubmission = (taskId: string) => user ? getPlayerSubmission(taskId, user.id) : undefined;
+  const myWatchCompleted = (task: Task) => {
+    if (!user || !task.requires_watch) return false;
+    const wp = getPlayerWatchProgress(task.id, user.id);
+    return wp?.completed === true;
+  };
 
-  const openTasks = tasks.filter((t) => !t.is_closed && !mySubmission(t.id));
-  const submittedTasks = tasks.filter((t) => !!mySubmission(t.id));
+  const isTaskDone = (task: Task) => !!mySubmission(task.id) || myWatchCompleted(task);
+  const openTasks = tasks.filter((t) => !t.is_closed && !isTaskDone(t));
+  const submittedTasks = tasks.filter((t) => isTaskDone(t));
 
   const getYoutubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]+)/);
@@ -280,6 +296,15 @@ export default function Aufgaben() {
               <Label className="flex items-center gap-1.5"><Youtube className="h-4 w-4" /> YouTube Link</Label>
               <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
             </div>
+            {youtubeUrl && (
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div>
+                  <Label className="flex items-center gap-1.5"><Eye className="h-4 w-4" /> Video muss angeschaut werden</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Spieler müssen 90% des Videos schauen</p>
+                </div>
+                <Switch checked={requiresWatch} onCheckedChange={setRequiresWatch} />
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4" /> Link</Label>
               <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." />
@@ -349,6 +374,7 @@ export default function Aufgaben() {
                       {(task.youtube_url || task.link_url || task.photo_url || task.pdf_url) && (
                         <div className="flex gap-1.5 mt-1.5">
                           {task.youtube_url && <Badge variant="outline" className="gap-1 text-xs"><Youtube className="h-3 w-3" />YT</Badge>}
+                          {task.requires_watch && <Badge variant="outline" className="gap-1 text-xs"><Eye className="h-3 w-3" />Watch</Badge>}
                           {task.link_url && <Badge variant="outline" className="gap-1 text-xs"><LinkIcon className="h-3 w-3" />Link</Badge>}
                           {task.photo_url && <Badge variant="outline" className="gap-1 text-xs"><Image className="h-3 w-3" />Foto</Badge>}
                           {task.pdf_url && <Badge variant="outline" className="gap-1 text-xs"><FileText className="h-3 w-3" />PDF</Badge>}
@@ -360,7 +386,11 @@ export default function Aufgaben() {
                     </Badge>
                   </div>
                   <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>{submissions.filter((s) => s.task_id === task.id).length}/{players.length} abgegeben</span>
+                    {task.requires_watch ? (
+                      <span>{watchProgress.filter((w: any) => w.task_id === task.id && w.completed).length}/{players.length} geschaut</span>
+                    ) : (
+                      <span>{submissions.filter((s) => s.task_id === task.id).length}/{players.length} abgegeben</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -383,6 +413,11 @@ export default function Aufgaben() {
                     <p className="font-medium">{task.title}</p>
                     {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
                     <TaskMediaDisplay task={task} />
+                    {task.requires_watch && task.youtube_url ? (
+                      <div className="mt-3">
+                        <YouTubeWatchTask taskId={task.id} youtubeUrl={task.youtube_url} onCompleted={fetchAll} />
+                      </div>
+                    ) : (
                     <div className="mt-3">
                       {task.is_closed ? (
                         <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Verpasst</Badge>
@@ -404,6 +439,7 @@ export default function Aufgaben() {
                         </label>
                       )}
                     </div>
+                    )}
                   </CardContent>
                 </Card>
               ))
@@ -414,7 +450,8 @@ export default function Aufgaben() {
               <Card><CardContent className="py-8 text-center text-muted-foreground">Noch keine Aufgaben abgegeben.</CardContent></Card>
             ) : (
               submittedTasks.map((task) => {
-                const sub = mySubmission(task.id)!;
+                const sub = mySubmission(task.id);
+                const isWatch = task.requires_watch && myWatchCompleted(task);
                 return (
                   <Card key={task.id}>
                     <CardContent className="pt-4">
@@ -424,8 +461,10 @@ export default function Aufgaben() {
                           {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Abgegeben</Badge>
-                          {!task.is_closed && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Check className="h-3 w-3" />{isWatch ? "Geschaut" : "Abgegeben"}
+                          </Badge>
+                          {!task.is_closed && sub && (
                             <Button
                               variant="ghost" size="icon"
                               className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive"
@@ -459,11 +498,27 @@ export default function Aufgaben() {
               <p className="text-sm font-medium">Abgabestatus:</p>
               {players.map((player) => {
                 const sub = getPlayerSubmission(selectedTask.id, player.id);
-                const missed = selectedTask.is_closed && !sub;
+                const wp = getPlayerWatchProgress(selectedTask.id, player.id);
+                const missed = selectedTask.is_closed && !sub && !wp?.completed;
                 return (
                   <div key={player.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                     <span className="text-sm">{player.name}</span>
-                    {sub ? (
+                    {selectedTask.requires_watch ? (
+                      wp?.completed ? (
+                        <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Geschaut</Badge>
+                      ) : wp ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {wp.total_seconds > 0 ? Math.min(100, Math.round(((wp.watched_seconds as any[])?.length || 0) / wp.total_seconds * 100)) : 0}%
+                          </span>
+                          <Progress value={wp.total_seconds > 0 ? Math.min(100, Math.round(((wp.watched_seconds as any[])?.length || 0) / wp.total_seconds * 100)) : 0} className="h-2 w-20" />
+                        </div>
+                      ) : missed ? (
+                        <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Verpasst</Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1"><X className="h-3 w-3" />Nicht gestartet</Badge>
+                      )
+                    ) : sub ? (
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Abgegeben</Badge>
                         <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px]"
