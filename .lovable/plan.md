@@ -1,29 +1,54 @@
 
 
-## Fix: Mobile-Overflow auf Verwaltung und Statistiken
+## DBB-Spielplan Import fuer Slama Jama Groebenzell
 
-### Problem
-Zwei Ursachen fuer das Rauszoomen:
+### Analyse
 
-1. **Verwaltung - TabsList**: Die 4 Tabs ("Spieler", "Spiele", "Verpasste Abgaben", "Passwort") passen nicht in 390px Breite. Die `TabsList` hat `inline-flex` und laeuft ueber den Viewport hinaus.
+Der DBB hat **keine offizielle JSON-API**. Die Website `basketball-bund.net` ist ein altes Java-System (TeamSL) ohne REST-Schnittstelle. **Aber**: Es gibt oeffentlich zugaengliche "Print"-Seiten mit strukturiertem HTML, die geparst werden koennen:
 
-2. **Statistiken - Angesetzte Spiele**: Die Cards mit Gegner-Name, Datum, Uhrzeit, Ort in einer Zeile plus "Live-Statistik" Button koennen bei langen Gegnernamen oder Ort-Angaben ueberlaufen.
+```text
+https://www.basketball-bund.net/public/spielplan_list.jsp
+  ?print=1
+  &viewDescKey=sport.dbb.liga.SpielplanViewPublic/index.jsp_
+  &liga_id={LIGA_ID}
+```
 
-### Loesung
+Diese Seiten liefern eine HTML-Tabelle mit: **Nr, Spieltag, Datum+Uhrzeit, Heim, Gast, Spielhalle** - genau die Daten, die wir brauchen.
 
-| Datei | Aenderung |
-|-------|-----------|
-| `src/pages/Verwaltung.tsx` | TabsList auf Mobile: `w-full` und `flex-wrap` oder `grid grid-cols-2` damit die Tabs umbrechen statt ueberlaufen. "Verpasste Abgaben" auf Mobile kuerzen zu "Verpasst". |
-| `src/pages/Statistiken.tsx` | Angesetzte-Spiele-Cards: Metadata-Zeile mit `flex-wrap` versehen. "Live-Statistik" Button auf Mobile nur als Icon-Button ohne Text. `min-w-0` und `overflow-hidden` auf den Text-Container. |
+### Vorgehen
 
-### Details
+**Schritt 1: Liga-ID ermitteln**
+Dein Team taucht bereits auf der DBB-Seite auf (z.B. liga_id 51302 fuer U12m). Fuer die U16-1 Bezirksliga West muss die korrekte liga_id gefunden werden. Ich wuerde dich bitten, die Liga-ID aus der URL auf basketball-bund.net zu nennen (die Zahl nach `liga_id=`), da es 459 Ligen im BBV gibt und die U16 Bezirksliga West Maennlich nicht auf der ersten Seite erscheint.
 
-**Verwaltung TabsList** (Zeile 274-286):
-- `TabsList` bekommt `className="w-full grid grid-cols-4"` auf Mobile bzw `flex-wrap`
-- Alternativ: Tab-Labels auf Mobile kuerzen ("Verpasst" statt "Verpasste Abgaben")
+**Schritt 2: Edge Function zum Scrapen**
+Eine Backend-Funktion, die:
+- Die Print-Spielplan-Seite der DBB abruft
+- Das HTML parst (Datum, Uhrzeit, Heim/Gast, Halle extrahiert)
+- Nur Spiele von "Slama Jama Gröbenzell" filtert
+- Die Daten als JSON zurueckgibt
 
-**Statistiken Cards** (Zeile 161-193):
-- Textcontainer bekommt `min-w-0` damit truncation funktioniert
-- Metadata `flex-wrap` fuer lange Ortsangaben
-- "Live-Statistik" Button auf Mobile: nur Play-Icon, kein Text
+**Schritt 3: Import-Button in Verwaltung**
+Ein Button auf der Verwaltungs-Seite (Tab "Spiele"), der:
+- Die Edge Function aufruft
+- Die DBB-Spiele anzeigt
+- Noch nicht vorhandene Spiele als "scheduled" in die `games`-Tabelle importiert
+- Bereits vorhandene Spiele (gleicher Gegner + Datum) ueberspringt
+
+### Was du tun musst
+
+Bitte geh auf `basketball-bund.net`, navigiere zu deiner U16-1 Bezirksliga West Maennlich Liga und teil mir die **liga_id** aus der URL mit (die Zahl nach `liga_id=` in der Adressleiste).
+
+### Technische Details
+
+| Komponente | Beschreibung |
+|---|---|
+| `supabase/functions/import-dbb-schedule/index.ts` | Edge Function: Fetcht die DBB Print-Seite, parst HTML mit Regex/String-Parsing, gibt JSON-Array zurueck |
+| `src/pages/Verwaltung.tsx` | Neuer "DBB Import" Button im Spiele-Tab |
+| `src/components/verwaltung/DBBImportDialog.tsx` | Dialog zeigt gefundene Spiele, laesst Coach auswaehlen welche importiert werden |
+
+### Einschraenkungen
+
+- **Kein Echtzeit-Sync**: Die Daten werden nur bei manuellem Import aktualisiert
+- **HTML-Scraping**: Falls der DBB sein HTML-Format aendert, muss der Parser angepasst werden
+- **Keine Ergebnisse**: Nur Ansetzungen werden importiert, keine Spielergebnisse
 
