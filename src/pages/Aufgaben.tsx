@@ -66,6 +66,8 @@ export default function Aufgaben() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
+  const [requiresWatch, setRequiresWatch] = useState(false);
+  const [watchProgress, setWatchProgress] = useState<any[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -75,14 +77,19 @@ export default function Aufgaben() {
   const [undoConfirm, setUndoConfirm] = useState<{ taskId: string; subId: string } | null>(null);
 
   const fetchAll = async () => {
-    const [tasksRes, subsRes, playersRes] = await Promise.all([
+    const queries: Promise<any>[] = [
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("task_submissions").select("*"),
       supabase.from("profiles").select("*").eq("role", "spieler").eq("is_active", true),
-    ]);
+    ];
+    // Coach can see all watch progress
+    queries.push(supabase.from("task_watch_progress").select("*"));
+
+    const [tasksRes, subsRes, playersRes, watchRes] = await Promise.all(queries);
     if (tasksRes.data) setTasks(tasksRes.data as Task[]);
     if (subsRes.data) setSubmissions(subsRes.data);
     if (playersRes.data) setPlayers(playersRes.data as Profile[]);
+    if (watchRes.data) setWatchProgress(watchRes.data);
     setLoading(false);
   };
 
@@ -115,11 +122,12 @@ export default function Aufgaben() {
         link_url: linkUrl || null,
         photo_url: photoUrl,
         pdf_url: pdfUrl,
-      });
+        requires_watch: youtubeUrl ? requiresWatch : false,
+      } as any);
       if (error) throw error;
 
       setTitle(""); setDescription(""); setYoutubeUrl(""); setLinkUrl("");
-      setPhotoFile(null); setPdfFile(null); setShowCreate(false);
+      setPhotoFile(null); setPdfFile(null); setShowCreate(false); setRequiresWatch(false);
       fetchAll();
       toast.success("Aufgabe erstellt");
     } catch (err: any) {
