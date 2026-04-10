@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -5,18 +6,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
-import Login from "@/pages/Login";
-import ResetPassword from "@/pages/ResetPassword";
-import Feed from "@/pages/Feed";
-import Aufgaben from "@/pages/Aufgaben";
-import Statistiken from "@/pages/Statistiken";
-import LiveInput from "@/pages/LiveInput";
-import GameSummary from "@/pages/GameSummary";
-import PlayerStats from "@/pages/PlayerStats";
-import Verwaltung from "@/pages/Verwaltung";
-import Profil from "@/pages/Profil";
-import ChangePassword from "@/pages/ChangePassword";
-import NotFound from "@/pages/NotFound";
+
+const Login = lazy(() => import("@/pages/Login"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const Feed = lazy(() => import("@/pages/Feed"));
+const Aufgaben = lazy(() => import("@/pages/Aufgaben"));
+const Statistiken = lazy(() => import("@/pages/Statistiken"));
+const LiveInput = lazy(() => import("@/pages/LiveInput"));
+const GameSummary = lazy(() => import("@/pages/GameSummary"));
+const PlayerStats = lazy(() => import("@/pages/PlayerStats"));
+const Verwaltung = lazy(() => import("@/pages/Verwaltung"));
+const Profil = lazy(() => import("@/pages/Profil"));
+const ChangePassword = lazy(() => import("@/pages/ChangePassword"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient();
 
