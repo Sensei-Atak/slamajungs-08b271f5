@@ -1,0 +1,1 @@
+ALTER TABLE public.post_comments ALTER COLUMN post_id TYPE text USING post_id::text;
