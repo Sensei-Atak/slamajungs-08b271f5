@@ -14,8 +14,10 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Plus, Check, X, AlertTriangle, Upload, Trash2, Lock, Play,
-  ClipboardList, Undo2, Youtube, Link as LinkIcon, Image, FileText,
+  ClipboardList, Undo2, Youtube, Link as LinkIcon, Image, FileText, Eye,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import YouTubeWatchTask from "@/components/feed/YouTubeWatchTask";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
