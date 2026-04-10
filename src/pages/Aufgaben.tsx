@@ -232,7 +232,7 @@ export default function Aufgaben() {
 
   const TaskMediaDisplay = ({ task }: { task: Task }) => (
     <div className="space-y-2 mt-2">
-      {task.youtube_url && (
+      {task.youtube_url && !task.requires_watch && (
         <div className="aspect-video w-full max-w-md rounded-lg overflow-hidden">
           {getYoutubeEmbedUrl(task.youtube_url) ? (
             <iframe
