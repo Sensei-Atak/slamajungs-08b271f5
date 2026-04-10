@@ -201,10 +201,18 @@ export default function Aufgaben() {
 
   const getPlayerSubmission = (taskId: string, playerId: string) =>
     submissions.find((s) => s.task_id === taskId && s.player_id === playerId);
+  const getPlayerWatchProgress = (taskId: string, playerId: string) =>
+    watchProgress.find((w: any) => w.task_id === taskId && w.player_id === playerId);
   const mySubmission = (taskId: string) => user ? getPlayerSubmission(taskId, user.id) : undefined;
+  const myWatchCompleted = (task: Task) => {
+    if (!user || !task.requires_watch) return false;
+    const wp = getPlayerWatchProgress(task.id, user.id);
+    return wp?.completed === true;
+  };
 
-  const openTasks = tasks.filter((t) => !t.is_closed && !mySubmission(t.id));
-  const submittedTasks = tasks.filter((t) => !!mySubmission(t.id));
+  const isTaskDone = (task: Task) => !!mySubmission(task.id) || myWatchCompleted(task);
+  const openTasks = tasks.filter((t) => !t.is_closed && !isTaskDone(t));
+  const submittedTasks = tasks.filter((t) => isTaskDone(t));
 
   const getYoutubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]+)/);
@@ -288,6 +296,15 @@ export default function Aufgaben() {
               <Label className="flex items-center gap-1.5"><Youtube className="h-4 w-4" /> YouTube Link</Label>
               <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
             </div>
+            {youtubeUrl && (
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div>
+                  <Label className="flex items-center gap-1.5"><Eye className="h-4 w-4" /> Video muss angeschaut werden</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Spieler müssen 90% des Videos schauen</p>
+                </div>
+                <Switch checked={requiresWatch} onCheckedChange={setRequiresWatch} />
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="flex items-center gap-1.5"><LinkIcon className="h-4 w-4" /> Link</Label>
               <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." />
@@ -391,6 +408,11 @@ export default function Aufgaben() {
                     <p className="font-medium">{task.title}</p>
                     {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
                     <TaskMediaDisplay task={task} />
+                    {task.requires_watch && task.youtube_url ? (
+                      <div className="mt-3">
+                        <YouTubeWatchTask taskId={task.id} youtubeUrl={task.youtube_url} onCompleted={fetchAll} />
+                      </div>
+                    ) : (
                     <div className="mt-3">
                       {task.is_closed ? (
                         <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Verpasst</Badge>
@@ -409,6 +431,10 @@ export default function Aufgaben() {
                           </Button>
                           <input type="file" accept="video/*" className="hidden"
                             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(task.id, f); }} />
+                        </label>
+                      )}
+                    </div>
+                    )}
                         </label>
                       )}
                     </div>
