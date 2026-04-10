@@ -490,11 +490,27 @@ export default function Aufgaben() {
               <p className="text-sm font-medium">Abgabestatus:</p>
               {players.map((player) => {
                 const sub = getPlayerSubmission(selectedTask.id, player.id);
-                const missed = selectedTask.is_closed && !sub;
+                const wp = getPlayerWatchProgress(selectedTask.id, player.id);
+                const missed = selectedTask.is_closed && !sub && !wp?.completed;
                 return (
                   <div key={player.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                     <span className="text-sm">{player.name}</span>
-                    {sub ? (
+                    {selectedTask.requires_watch ? (
+                      wp?.completed ? (
+                        <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Geschaut</Badge>
+                      ) : wp ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {wp.total_seconds > 0 ? Math.min(100, Math.round(((wp.watched_seconds as any[])?.length || 0) / wp.total_seconds * 100)) : 0}%
+                          </span>
+                          <Progress value={wp.total_seconds > 0 ? Math.min(100, Math.round(((wp.watched_seconds as any[])?.length || 0) / wp.total_seconds * 100)) : 0} className="h-2 w-20" />
+                        </div>
+                      ) : missed ? (
+                        <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Verpasst</Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1"><X className="h-3 w-3" />Nicht gestartet</Badge>
+                      )
+                    ) : sub ? (
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" />Abgegeben</Badge>
                         <Button size="sm" variant="ghost" className="min-h-[44px] min-w-[44px]"
