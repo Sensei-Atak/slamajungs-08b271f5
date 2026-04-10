@@ -192,7 +192,7 @@ export default function YouTubeWatchTask({ taskId, youtubeUrl, onCompleted }: Yo
             {progress}% geschaut
           </span>
           {completed && (
-            <span className="flex items-center gap-1 text-green-600 font-medium">
+            <span className="flex items-center gap-1 text-primary font-medium">
               <Check className="h-4 w-4" /> Abgeschlossen
             </span>
           )}
