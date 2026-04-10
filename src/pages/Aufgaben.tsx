@@ -374,6 +374,7 @@ export default function Aufgaben() {
                       {(task.youtube_url || task.link_url || task.photo_url || task.pdf_url) && (
                         <div className="flex gap-1.5 mt-1.5">
                           {task.youtube_url && <Badge variant="outline" className="gap-1 text-xs"><Youtube className="h-3 w-3" />YT</Badge>}
+                          {task.requires_watch && <Badge variant="outline" className="gap-1 text-xs"><Eye className="h-3 w-3" />Watch</Badge>}
                           {task.link_url && <Badge variant="outline" className="gap-1 text-xs"><LinkIcon className="h-3 w-3" />Link</Badge>}
                           {task.photo_url && <Badge variant="outline" className="gap-1 text-xs"><Image className="h-3 w-3" />Foto</Badge>}
                           {task.pdf_url && <Badge variant="outline" className="gap-1 text-xs"><FileText className="h-3 w-3" />PDF</Badge>}
@@ -385,7 +386,11 @@ export default function Aufgaben() {
                     </Badge>
                   </div>
                   <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>{submissions.filter((s) => s.task_id === task.id).length}/{players.length} abgegeben</span>
+                    {task.requires_watch ? (
+                      <span>{watchProgress.filter((w: any) => w.task_id === task.id && w.completed).length}/{players.length} geschaut</span>
+                    ) : (
+                      <span>{submissions.filter((s) => s.task_id === task.id).length}/{players.length} abgegeben</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
