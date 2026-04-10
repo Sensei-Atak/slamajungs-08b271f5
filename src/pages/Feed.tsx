@@ -11,6 +11,7 @@ import HangoutCard from "@/components/feed/HangoutCard";
 import PhotoCard from "@/components/feed/PhotoCard";
 import DailyWinner from "@/components/feed/DailyWinner";
 import GameDayBanner from "@/components/feed/GameDayBanner";
+import TaskReminder from "@/components/feed/TaskReminder";
 import { toast } from "sonner";
 import { startOfDay, endOfDay, format } from "date-fns";
 
@@ -222,6 +223,7 @@ export default function Feed() {
 
   return (
     <div className="space-y-4">
+      <TaskReminder />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Feed</h1>
         <PostTypeSelector onSelect={(type) => setActiveForm(type)} />
