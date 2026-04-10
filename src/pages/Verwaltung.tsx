@@ -306,6 +306,7 @@ export default function Verwaltung() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="teamcode" className="text-xs sm:text-sm">Team-Code</TabsTrigger>
         </TabsList>
 
         <TabsContent value="spieler" className="space-y-3">
