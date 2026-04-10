@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   label: string;
@@ -79,7 +80,10 @@ export default function AppLayout() {
             <Menu className="h-5 w-5" />
           </Button>
           {sidebarOpen && (
-            <span className="font-semibold text-sm truncate">Slama Jama</span>
+            <>
+              <span className="font-semibold text-sm truncate flex-1">Slama Jama</span>
+              <NotificationBell />
+            </>
           )}
         </div>
         <nav className="flex-1 flex flex-col gap-1 p-2">
@@ -120,6 +124,9 @@ export default function AppLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
+        <div className="flex items-center justify-end p-2 md:hidden">
+          <NotificationBell />
+        </div>
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
           <Outlet />
         </main>
