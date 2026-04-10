@@ -371,7 +371,11 @@ export default function Verwaltung() {
         </TabsContent>
 
         <TabsContent value="spiele" className="space-y-3">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowDBBImport(true)} className="min-h-[44px] gap-2">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">DBB Import</span>
+            </Button>
             <Button onClick={() => setShowSchedule(true)} className="min-h-[44px] gap-2">
               <Plus className="h-4 w-4" />
               Spiel ansetzen
