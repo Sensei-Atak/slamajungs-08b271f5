@@ -294,7 +294,7 @@ export default function Verwaltung() {
       <h1 className="text-xl font-semibold">Verwaltung</h1>
 
       <Tabs defaultValue="spieler">
-        <TabsList className="w-full grid grid-cols-4 h-auto">
+        <TabsList className="w-full grid grid-cols-5 h-auto">
           <TabsTrigger value="spieler" className="text-xs sm:text-sm">Spieler</TabsTrigger>
           <TabsTrigger value="spiele" className="text-xs sm:text-sm">Spiele</TabsTrigger>
           <TabsTrigger value="verpasst" className="text-xs sm:text-sm"><span className="sm:hidden">Verpasst</span><span className="hidden sm:inline">Verpasste Abgaben</span></TabsTrigger>
