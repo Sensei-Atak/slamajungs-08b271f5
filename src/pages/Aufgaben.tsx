@@ -435,9 +435,6 @@ export default function Aufgaben() {
                       )}
                     </div>
                     )}
-                        </label>
-                      )}
-                    </div>
                   </CardContent>
                 </Card>
               ))
