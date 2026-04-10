@@ -37,6 +37,7 @@ interface Player {
   jersey_number: number | null;
   position: string | null;
   is_active: boolean;
+  username: string | null;
 }
 
 interface Game {

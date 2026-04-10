@@ -15,6 +15,8 @@ import { Camera } from "lucide-react";
 export default function Profil() {
   const { profile, user, isCoach, signOut } = useAuth();
   const [name, setName] = useState(profile?.name || "");
+  const [username, setUsername] = useState((profile as any)?.username || "");
+  const [usernameError, setUsernameError] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -46,15 +48,29 @@ export default function Profil() {
     }
   };
 
+  const validateUsername = (val: string) => {
+    if (!val) { setUsernameError(""); return true; }
+    if (val.length < 3) { setUsernameError("Mindestens 3 Zeichen"); return false; }
+    if (!/^[a-z0-9._]+$/.test(val)) { setUsernameError("Nur Kleinbuchstaben, Zahlen, Punkte und Unterstriche"); return false; }
+    setUsernameError("");
+    return true;
+  };
+
   const handleSave = async () => {
     if (!user) return;
+    const trimmedUsername = username.trim() || null;
+    if (trimmedUsername && !validateUsername(trimmedUsername)) return;
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ name })
+      .update({ name, username: trimmedUsername } as any)
       .eq("id", user.id);
     if (error) {
-      toast.error(error.message);
+      if (error.message.includes("idx_profiles_username_unique")) {
+        toast.error("Dieser Benutzername ist bereits vergeben");
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success("Profil gespeichert");
     }
@@ -124,6 +140,24 @@ export default function Profil() {
           <div className="space-y-2">
             <Label>Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <Label>Benutzername</Label>
+            <Input
+              value={username}
+              onChange={(e) => {
+                const val = e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "");
+                setUsername(val);
+                validateUsername(val);
+              }}
+              placeholder="z.B. tomi.arthur"
+            />
+            {usernameError && <p className="text-sm text-destructive">{usernameError}</p>}
+            <p className="text-xs text-muted-foreground">
+              Optional – vereinfacht den Login. Nur du und dein Coach können ihn sehen.
+            </p>
           </div>
 
           {/* E-Mail */}
