@@ -1,25 +1,30 @@
 
 
-## Pop-Up Erinnerung fuer offene Aufgaben nach dem Login
+## Registrierung nur mit Team-Code schuetzen
 
 ### Uebersicht
 
-Nach dem Login sehen Spieler ein Dialog-Pop-Up, das sie an offene Aufgaben erinnert, bei denen sie noch nichts eingereicht haben. Das Pop-Up erscheint nur einmal pro Session und nur wenn es tatsaechlich offene Aufgaben ohne Abgabe gibt.
+Beim Registrieren muessen Spieler einen geheimen Team-Code eingeben (z.B. "SlamaJama2026"). Ohne den richtigen Code ist keine Registrierung moeglich. Der Code wird serverseitig validiert, damit er nicht umgangen werden kann.
 
 ### Aenderungen
 
-**1. Neue Komponente: `src/components/feed/TaskReminder.tsx`**
-- Dialog-Komponente die beim Feed-Mount prüft ob offene Tasks ohne Submission existieren
-- Query: Alle Tasks wo `is_closed = false` laden, dann `task_submissions` fuer den aktuellen User laden, und Tasks ohne Submission filtern
-- Zeigt Anzahl offener Aufgaben und einen Button "Zu den Aufgaben" (navigiert zu `/aufgaben`)
-- Zweiter Button "Spaeter" schliesst das Pop-Up
-- Wird nur einmal pro Session angezeigt (sessionStorage Flag)
+**1. Datenbank: Team-Code als App-Setting speichern**
+- Neue Tabelle `app_settings` mit key/value-Paaren
+- Eintrag `team_invite_code` mit dem gewuenschten Code
+- RLS: Nur Coach kann den Code lesen und aendern
+- Security-Definer-Funktion `verify_invite_code(code text)` die `true/false` zurueckgibt -- so wird der Code nie an den Client gesendet
 
-**2. `src/pages/Feed.tsx`**
-- `TaskReminder` Komponente einbinden, damit das Pop-Up beim Laden des Feeds erscheint (Feed ist die erste Seite nach Login)
+**2. `src/pages/Login.tsx`**
+- Neues Eingabefeld "Team-Code" im Registrierungsformular
+- Vor dem `signUp`-Aufruf wird der Code ueber `supabase.rpc("verify_invite_code")` geprueft
+- Fehlermeldung wenn der Code falsch ist
 
-### Logik
-- Offene Tasks = `tasks` wo `is_closed = false`
-- Fehlende Abgaben = offene Tasks ohne passenden Eintrag in `task_submissions` fuer den aktuellen User
-- Pop-Up nur anzeigen wenn `fehlende Abgaben > 0` und `sessionStorage.getItem("taskReminderShown")` nicht gesetzt ist
+**3. `src/pages/Verwaltung.tsx`**
+- Neuer Bereich fuer den Coach: "Team-Code aendern"
+- Einfaches Textfeld + Speichern-Button
+
+### Sicherheit
+- Der Code wird NIE an den Client uebertragen -- nur eine `true/false`-Antwort
+- Die Validierung erfolgt serverseitig ueber eine Security-Definer-Funktion
+- Nur der Coach kann den Code einsehen und aendern
 
