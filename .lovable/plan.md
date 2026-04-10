@@ -1,32 +1,25 @@
 
 
-## Benutzername im Profil (optional, fuer einfacheres Login)
+## Pop-Up Erinnerung fuer offene Aufgaben nach dem Login
 
 ### Uebersicht
 
-Spieler koennen sich im Profil einen optionalen Benutzernamen setzen. Dieser wird NUR fuer den Login verwendet und ist nur fuer den Spieler selbst und den Coach sichtbar. Beim Login kann man dann wahlweise Benutzername oder E-Mail eingeben.
+Nach dem Login sehen Spieler ein Dialog-Pop-Up, das sie an offene Aufgaben erinnert, bei denen sie noch nichts eingereicht haben. Das Pop-Up erscheint nur einmal pro Session und nur wenn es tatsaechlich offene Aufgaben ohne Abgabe gibt.
 
 ### Aenderungen
 
-**1. Datenbank-Migration**
-- `username` Spalte zur `profiles`-Tabelle hinzufuegen (text, nullable, unique)
-- `get_email_by_username` Security-Definer-Funktion erstellen: nimmt einen Username, gibt die zugehoerige E-Mail aus `auth.users` zurueck (damit der Login funktioniert, ohne die E-Mail offenzulegen)
+**1. Neue Komponente: `src/components/feed/TaskReminder.tsx`**
+- Dialog-Komponente die beim Feed-Mount prüft ob offene Tasks ohne Submission existieren
+- Query: Alle Tasks wo `is_closed = false` laden, dann `task_submissions` fuer den aktuellen User laden, und Tasks ohne Submission filtern
+- Zeigt Anzahl offener Aufgaben und einen Button "Zu den Aufgaben" (navigiert zu `/aufgaben`)
+- Zweiter Button "Spaeter" schliesst das Pop-Up
+- Wird nur einmal pro Session angezeigt (sessionStorage Flag)
 
-**2. `src/pages/Profil.tsx`**
-- Neues optionales Feld "Benutzername" unterhalb des Namens
-- Hinweistext: "Optional -- vereinfacht den Login. Nur du und dein Coach koennen ihn sehen."
-- Validierung: nur Kleinbuchstaben, Zahlen, Punkte/Unterstriche, min. 3 Zeichen
-- Wird zusammen mit dem Namen gespeichert
+**2. `src/pages/Feed.tsx`**
+- `TaskReminder` Komponente einbinden, damit das Pop-Up beim Laden des Feeds erscheint (Feed ist die erste Seite nach Login)
 
-**3. `src/pages/Login.tsx`**
-- Das E-Mail-Feld wird zu einem kombinierten "E-Mail oder Benutzername"-Feld
-- Beim Submit: wenn die Eingabe kein `@` enthaelt, wird sie als Username behandelt und ueber `get_email_by_username` die E-Mail aufgeloest
-- Fehlerbehandlung wenn Username nicht gefunden
-
-**4. `src/pages/Verwaltung.tsx`**
-- In der Spieler-Tabelle den Benutzernamen anzeigen (nur Coach sieht diese Seite)
-
-### Sicherheit
-- Die `get_email_by_username`-Funktion ist Security Definer und gibt nur die E-Mail zurueck -- kein oeffentlicher Zugriff auf andere Daten
-- RLS auf `profiles` bleibt unveraendert -- alle authentifizierten User koennen Profile sehen, aber der Username wird nur im eigenen Profil und in der Coach-Verwaltung angezeigt (UI-seitige Einschraenkung)
+### Logik
+- Offene Tasks = `tasks` wo `is_closed = false`
+- Fehlende Abgaben = offene Tasks ohne passenden Eintrag in `task_submissions` fuer den aktuellen User
+- Pop-Up nur anzeigen wenn `fehlende Abgaben > 0` und `sessionStorage.getItem("taskReminderShown")` nicht gesetzt ist
 
