@@ -26,6 +26,7 @@ export default function Login() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -71,8 +72,18 @@ export default function Login() {
       toast.error("Passwörter stimmen nicht überein");
       return;
     }
+    if (!inviteCode.trim()) {
+      toast.error("Bitte Team-Code eingeben");
+      return;
+    }
     setLoading(true);
     try {
+      const { data: codeValid, error: codeError } = await supabase.rpc("verify_invite_code", { code: inviteCode.trim() });
+      if (codeError || !codeValid) {
+        toast.error("Ungültiger Team-Code");
+        setLoading(false);
+        return;
+      }
       const generatedEmail = `${normalizeForEmail(firstName.trim())}.${normalizeForEmail(lastName.trim())}@sj.de`;
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
       const { error } = await supabase.auth.signUp({
@@ -173,6 +184,10 @@ export default function Login() {
                   Deine E-Mail: <span className="font-medium">{normalizeForEmail(firstName.trim())}.{normalizeForEmail(lastName.trim())}@sj.de</span>
                 </p>
               )}
+              <div className="space-y-2">
+                <Label htmlFor="inviteCode">Team-Code</Label>
+                <Input id="inviteCode" type="text" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required placeholder="Code vom Coach" />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="signupPassword">Passwort</Label>
                 <Input id="signupPassword" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
