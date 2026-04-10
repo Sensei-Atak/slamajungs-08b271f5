@@ -18,8 +18,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X, Calendar, Clock, MapPin } from "lucide-react";
+import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X, Calendar, Clock, MapPin, Download } from "lucide-react";
 import ScheduleGameDialog from "@/components/verwaltung/ScheduleGameDialog";
+import DBBImportDialog from "@/components/verwaltung/DBBImportDialog";
 import { Badge } from "@/components/ui/badge";
 
 const POSITIONS = [
@@ -74,6 +75,7 @@ export default function Verwaltung() {
   const [missedData, setMissedData] = useState<MissedRow[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showDBBImport, setShowDBBImport] = useState(false);
   const [deleteGameId, setDeleteGameId] = useState<string | null>(null);
   const [resetRequests, setResetRequests] = useState<ResetRequest[]>([]);
 
@@ -369,7 +371,11 @@ export default function Verwaltung() {
         </TabsContent>
 
         <TabsContent value="spiele" className="space-y-3">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowDBBImport(true)} className="min-h-[44px] gap-2">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">DBB Import</span>
+            </Button>
             <Button onClick={() => setShowSchedule(true)} className="min-h-[44px] gap-2">
               <Plus className="h-4 w-4" />
               Spiel ansetzen
@@ -742,6 +748,14 @@ export default function Verwaltung() {
         onOpenChange={setShowSchedule}
         onCreated={fetchAll}
         players={players}
+      />
+
+      {/* DBB Import dialog */}
+      <DBBImportDialog
+        open={showDBBImport}
+        onOpenChange={setShowDBBImport}
+        onImported={fetchAll}
+        existingGames={games.map((g) => ({ date: g.date, opponent: g.opponent }))}
       />
     </div>
   );
