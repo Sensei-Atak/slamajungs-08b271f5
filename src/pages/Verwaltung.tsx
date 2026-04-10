@@ -98,13 +98,33 @@ export default function Verwaltung() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Team invite code
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCodeLoading, setInviteCodeLoading] = useState(false);
+
   useEffect(() => {
     if (!isCoach) {
       navigate("/feed");
       return;
     }
     fetchAll();
+    fetchInviteCode();
   }, [isCoach, navigate]);
+
+  const fetchInviteCode = async () => {
+    const { data } = await supabase.from("app_settings").select("value").eq("key", "team_invite_code").single();
+    if (data) setInviteCode(data.value);
+  };
+
+  const saveInviteCode = async () => {
+    if (!inviteCode.trim()) { toast.error("Code darf nicht leer sein"); return; }
+    setInviteCodeLoading(true);
+    const { error } = await supabase.from("app_settings").update({ value: inviteCode.trim() }).eq("key", "team_invite_code");
+    if (error) toast.error("Fehler beim Speichern");
+    else toast.success("Team-Code gespeichert");
+    setInviteCodeLoading(false);
+  };
 
   const fetchAll = async () => {
     const [playersRes, gamesRes, tasksRes, subsRes, resetRes] = await Promise.all([
@@ -274,7 +294,7 @@ export default function Verwaltung() {
       <h1 className="text-xl font-semibold">Verwaltung</h1>
 
       <Tabs defaultValue="spieler">
-        <TabsList className="w-full grid grid-cols-4 h-auto">
+        <TabsList className="w-full grid grid-cols-5 h-auto">
           <TabsTrigger value="spieler" className="text-xs sm:text-sm">Spieler</TabsTrigger>
           <TabsTrigger value="spiele" className="text-xs sm:text-sm">Spiele</TabsTrigger>
           <TabsTrigger value="verpasst" className="text-xs sm:text-sm"><span className="sm:hidden">Verpasst</span><span className="hidden sm:inline">Verpasste Abgaben</span></TabsTrigger>
@@ -286,6 +306,7 @@ export default function Verwaltung() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="teamcode" className="text-xs sm:text-sm">Team-Code</TabsTrigger>
         </TabsList>
 
         <TabsContent value="spieler" className="space-y-3">
@@ -594,6 +615,23 @@ export default function Verwaltung() {
           <p className="text-xs text-muted-foreground">
             Du kannst auch direkt bei einem Spieler im Tab "Spieler" über das Schlüssel-Icon ein neues Passwort setzen.
           </p>
+        </TabsContent>
+
+        <TabsContent value="teamcode" className="space-y-3">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Spieler müssen diesen Code bei der Registrierung eingeben. Ändere ihn regelmäßig, um unbefugten Zugang zu verhindern.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="inviteCode">Aktueller Team-Code</Label>
+                <Input id="inviteCode" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+              </div>
+              <Button onClick={saveInviteCode} disabled={inviteCodeLoading} className="min-h-[44px]">
+                {inviteCodeLoading ? "Speichern..." : "Code speichern"}
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       feed_posts: {
         Row: {
           caption: string | null
@@ -504,6 +519,7 @@ export type Database = {
       }
       is_coach: { Args: { _user_id: string }; Returns: boolean }
       must_change_password: { Args: { _user_id: string }; Returns: boolean }
+      verify_invite_code: { Args: { code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "coach" | "spieler"
