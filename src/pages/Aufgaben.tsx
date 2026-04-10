@@ -36,6 +36,7 @@ interface Task {
   link_url: string | null;
   photo_url: string | null;
   pdf_url: string | null;
+  requires_watch: boolean;
 }
 
 interface Submission {
