@@ -11,6 +11,7 @@ import HangoutCard from "@/components/feed/HangoutCard";
 import PhotoCard from "@/components/feed/PhotoCard";
 import DailyWinner from "@/components/feed/DailyWinner";
 import GameDayBanner from "@/components/feed/GameDayBanner";
+import TaskReminder from "@/components/feed/TaskReminder";
 import { toast } from "sonner";
 import { startOfDay, endOfDay, format } from "date-fns";
 
