@@ -1,27 +1,40 @@
 
 
-## In-App Benachrichtigungen bei neuen Kommentaren
+## YouTube-Video als Pflichtaufgabe mit Watchtime-Tracking
 
 ### Uebersicht
-Spieler sehen ein Glocken-Symbol in der Navigation. Wenn jemand ihren Beitrag kommentiert, erscheint dort ein roter Zaehler. Per Klick oeffnet sich eine Liste der letzten Benachrichtigungen.
+Der Coach kann eine Aufgabe erstellen, bei der ein YouTube-Video vollstaendig angeschaut werden muss. Die App trackt die Watchtime ueber die YouTube IFrame Player API und markiert die Aufgabe erst als abgeschlossen, wenn der Spieler mindestens 90% des Videos tatsaechlich geschaut hat. Vorspulen wird erkannt und nicht als geschaute Zeit gezaehlt.
+
+### Wie es funktioniert
+- Der Spieler oeffnet die Aufgabe und sieht das eingebettete YouTube-Video
+- Die App trackt sekundengenau, welche Teile des Videos tatsaechlich abgespielt wurden (nicht vorgespult)
+- Ein Fortschrittsbalken zeigt an, wie viel Prozent geschaut wurden
+- Erst ab 90% erscheint der "Aufgabe abschliessen"-Button
+- Vorspulen ist moeglich (man kann den Player nicht sperren), aber nur tatsaechlich abgespielte Sekunden zaehlen
+- Der Fortschritt wird regelmaessig in der Datenbank gespeichert, damit man das Video auch in mehreren Sitzungen schauen kann
 
 ### Aenderungen
 
 **1. Datenbank**
-- Neue Tabelle `notifications` mit Spalten: `id`, `user_id` (Empfaenger), `type` (z.B. "comment"), `title`, `body`, `post_id`, `is_read`, `created_at`
-- RLS: Nutzer koennen nur eigene Benachrichtigungen lesen und als gelesen markieren
-- Datenbank-Funktion + Trigger auf `post_comments` INSERT: ermittelt den Besitzer des Beitrags (aus `feed_posts` oder `meals` je nach post_id-Format) und erstellt eine Notification -- aber nicht, wenn man seinen eigenen Beitrag kommentiert
+- Neue Spalte `requires_watch` (boolean, default false) in der `tasks`-Tabelle -- markiert ob diese Aufgabe ein Watch-Task ist
+- Neue Tabelle `task_watch_progress` mit `task_id`, `player_id`, `watched_seconds`, `total_seconds`, `completed` -- speichert den Fortschritt pro Spieler
+- RLS: Spieler koennen eigenen Fortschritt lesen/schreiben, Coach kann alles sehen
 
-**2. Notification-Dropdown (`src/components/NotificationBell.tsx`)**
-- Glocken-Icon mit Badge fuer ungelesene Anzahl
-- Popover mit Liste der letzten Benachrichtigungen (Name, Vorschau, Zeitstempel)
-- Klick auf eine Benachrichtigung markiert sie als gelesen
-- "Alle gelesen"-Button
+**2. YouTube Watch-Komponente (`src/components/feed/YouTubeWatchTask.tsx`)**
+- Laedt die YouTube IFrame Player API
+- Trackt jede Sekunde ob das Video gerade abspielt (nicht pausiert/vorgespult)
+- Zaehlt kumulierte Watch-Sekunden mit einem Set von geschauten Sekundenintervallen
+- Speichert Fortschritt alle 10 Sekunden in die Datenbank
+- Zeigt Fortschrittsbalken und "Abgeschlossen"-Button ab 90%
 
-**3. AppLayout anpassen**
-- NotificationBell in die Desktop-Sidebar-Kopfzeile und Mobile-Header einbauen
+**3. Aufgaben-Seite (`src/pages/Aufgaben.tsx`)**
+- Beim Erstellen: neuer Toggle "Video muss angeschaut werden" (nur wenn YouTube-URL gesetzt)
+- Spieleransicht: Wenn `requires_watch` aktiv, wird statt dem normalen Video-Upload die YouTubeWatchTask-Komponente angezeigt
+- Abschluss erfolgt automatisch per Datenbankeintrag statt Video-Upload
 
-### Sicherheit
-- RLS stellt sicher, dass Spieler nur ihre eigenen Benachrichtigungen sehen
-- Der Trigger laeuft als SECURITY DEFINER, damit er auf beide Tabellen zugreifen kann
+**4. Coach-Ansicht**
+- Im Task-Detail sieht der Coach pro Spieler den Watch-Fortschritt als Prozentbalken
+
+### Technisches Detail
+Die YouTube IFrame API bietet Events wie `onStateChange` (PLAYING, PAUSED, BUFFERING) und `getCurrentTime()`. Jede Sekunde im PLAYING-Zustand wird ein Zeitstempel in ein Set eingetragen. Da ein Set keine Duplikate erlaubt, zaehlt Vorspulen und Zurueckspulen nicht doppelt. Die Groesse des Sets geteilt durch die Videodauer ergibt den echten Fortschritt.
 
