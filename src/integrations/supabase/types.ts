@@ -493,6 +493,47 @@ export type Database = {
           },
         ]
       }
+      task_watch_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          player_id: string
+          task_id: string
+          total_seconds: number
+          updated_at: string
+          watched_seconds: Json
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          player_id: string
+          task_id: string
+          total_seconds?: number
+          updated_at?: string
+          watched_seconds?: Json
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          player_id?: string
+          task_id?: string
+          total_seconds?: number
+          updated_at?: string
+          watched_seconds?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_watch_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           created_at: string
@@ -503,6 +544,7 @@ export type Database = {
           link_url: string | null
           pdf_url: string | null
           photo_url: string | null
+          requires_watch: boolean
           title: string
           youtube_url: string | null
         }
@@ -515,6 +557,7 @@ export type Database = {
           link_url?: string | null
           pdf_url?: string | null
           photo_url?: string | null
+          requires_watch?: boolean
           title: string
           youtube_url?: string | null
         }
@@ -527,6 +570,7 @@ export type Database = {
           link_url?: string | null
           pdf_url?: string | null
           photo_url?: string | null
+          requires_watch?: boolean
           title?: string
           youtube_url?: string | null
         }
