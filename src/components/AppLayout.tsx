@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   label: string;
