@@ -36,10 +36,15 @@ const navItems: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { isCoach, signOut } = useAuth();
+  const { isCoach, signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [pendingResets, setPendingResets] = useState(0);
+
+  // Activity tracking (invisible to players)
+  useActivityTracker(user?.id);
   const [pendingResets, setPendingResets] = useState(0);
 
   useEffect(() => {
