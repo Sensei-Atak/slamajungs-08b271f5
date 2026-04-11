@@ -9,7 +9,11 @@ import {
   User,
   LogOut,
   Menu,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -32,11 +36,15 @@ const navItems: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { isCoach, signOut } = useAuth();
+  const { isCoach, signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pendingResets, setPendingResets] = useState(0);
+
+  // Activity tracking (invisible to players)
+  useActivityTracker(user?.id);
 
   useEffect(() => {
     if (!isCoach) return;
@@ -81,7 +89,10 @@ export default function AppLayout() {
           </Button>
           {sidebarOpen && (
             <>
-              <span className="font-semibold text-sm truncate flex-1">Slama Jama</span>
+              <span className="font-semibold text-sm truncate flex-1">🏀 Slama Jama</span>
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               <NotificationBell />
             </>
           )}
@@ -124,7 +135,10 @@ export default function AppLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
-        <div className="flex items-center justify-end p-2 md:hidden">
+        <div className="flex items-center justify-end gap-2 p-2 md:hidden">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <NotificationBell />
         </div>
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">

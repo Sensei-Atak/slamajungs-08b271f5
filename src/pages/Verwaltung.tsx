@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, UserX, RotateCcw, Pencil, Key, Copy, Check, X, Calendar, Clock, MapPin, Download } from "lucide-react";
 import ScheduleGameDialog from "@/components/verwaltung/ScheduleGameDialog";
 import DBBImportDialog from "@/components/verwaltung/DBBImportDialog";
+import ActivityTab from "@/components/verwaltung/ActivityTab";
 import { Badge } from "@/components/ui/badge";
 
 const POSITIONS = [
@@ -294,9 +295,10 @@ export default function Verwaltung() {
       <h1 className="text-xl font-semibold">Verwaltung</h1>
 
       <Tabs defaultValue="spieler">
-        <TabsList className="w-full grid grid-cols-5 h-auto">
+        <TabsList className="w-full grid grid-cols-6 h-auto">
           <TabsTrigger value="spieler" className="text-xs sm:text-sm">Spieler</TabsTrigger>
           <TabsTrigger value="spiele" className="text-xs sm:text-sm">Spiele</TabsTrigger>
+          <TabsTrigger value="aktivitaet" className="text-xs sm:text-sm">Aktivität</TabsTrigger>
           <TabsTrigger value="verpasst" className="text-xs sm:text-sm"><span className="sm:hidden">Verpasst</span><span className="hidden sm:inline">Verpasste Abgaben</span></TabsTrigger>
           <TabsTrigger value="passwort" className="relative text-xs sm:text-sm">
             Passwort
@@ -308,6 +310,11 @@ export default function Verwaltung() {
           </TabsTrigger>
           <TabsTrigger value="teamcode" className="text-xs sm:text-sm">Team-Code</TabsTrigger>
         </TabsList>
+
+        {/* Aktivität Tab */}
+        <TabsContent value="aktivitaet">
+          <ActivityTab />
+        </TabsContent>
 
         <TabsContent value="spieler" className="space-y-3">
           <div className="flex justify-end">
