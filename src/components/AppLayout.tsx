@@ -1,18 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Utensils,
-  ClipboardList,
-  BarChart3,
-  Settings,
-  User,
-  LogOut,
-  Menu,
-  Sun,
-  Moon,
-  Trophy,
-} from "lucide-react";
+import { Utensils, ClipboardList, BarChart3, Settings, User, LogOut, Menu, Sun, Moon, Trophy } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Button } from "@/components/ui/button";
@@ -62,9 +51,7 @@ export default function AppLayout() {
     return () => clearInterval(interval);
   }, [isCoach]);
 
-  const filteredItems = navItems.filter(
-    (item) => !item.coachOnly || isCoach
-  );
+  const filteredItems = navItems.filter((item) => !item.coachOnly || isCoach);
 
   const handleSignOut = async () => {
     await signOut();
@@ -77,7 +64,7 @@ export default function AppLayout() {
       <aside
         className={cn(
           "hidden md:flex flex-col border-r border-border/60 bg-card transition-all duration-200",
-          sidebarOpen ? "w-56" : "w-16"
+          sidebarOpen ? "w-56" : "w-16",
         )}
       >
         <div className="flex items-center gap-2 p-3 border-b border-border/60">
@@ -94,8 +81,12 @@ export default function AppLayout() {
               <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shadow-sm">
                 <span className="text-sm">🏀</span>
               </div>
-              <span className="font-bold text-sm truncate flex-1">Slama Jama</span>
-              <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px] rounded-xl">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="min-w-[36px] min-h-[36px] rounded-xl"
+              >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
               <NotificationBell />
@@ -113,7 +104,7 @@ export default function AppLayout() {
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all min-h-[42px]",
                   active
                     ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
@@ -141,10 +132,18 @@ export default function AppLayout() {
       {/* Mobile Sidebar Overlay */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
+          <div
+            className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-border/60 flex flex-col animate-in slide-in-from-left shadow-xl">
             <div className="flex items-center gap-3 p-4 border-b border-border/60">
-              <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(false)} className="min-w-[40px] min-h-[40px] rounded-xl">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="min-w-[40px] min-h-[40px] rounded-xl"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
               <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shadow-sm">
@@ -158,25 +157,36 @@ export default function AppLayout() {
                 return (
                   <button
                     key={item.path}
-                    onClick={() => { navigate(item.path); setMobileSidebarOpen(false); }}
+                    onClick={() => {
+                      navigate(item.path);
+                      setMobileSidebarOpen(false);
+                    }}
                     className={cn(
                       "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all min-h-[44px]",
                       active
                         ? "bg-primary/10 text-primary font-semibold"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     )}
                   >
                     <item.icon className="h-5 w-5 shrink-0" />
                     <span className="flex-1 text-left">{item.label}</span>
                     {item.path === "/verwaltung" && pendingResets > 0 && (
-                      <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs rounded-full">{pendingResets}</Badge>
+                      <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs rounded-full">
+                        {pendingResets}
+                      </Badge>
                     )}
                   </button>
                 );
               })}
             </nav>
             <div className="p-2 border-t border-border/60">
-              <button onClick={() => { handleSignOut(); setMobileSidebarOpen(false); }} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive w-full min-h-[44px] transition-colors">
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setMobileSidebarOpen(false);
+                }}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive w-full min-h-[44px] transition-colors"
+              >
                 <LogOut className="h-5 w-5 shrink-0" />
                 <span>Abmelden</span>
               </button>
@@ -190,7 +200,12 @@ export default function AppLayout() {
         {/* Mobile Header */}
         <div className="flex items-center justify-between gap-2 px-3 py-2 md:hidden border-b border-border/40">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)} className="min-w-[36px] min-h-[36px] rounded-xl">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="min-w-[36px] min-h-[36px] rounded-xl"
+            >
               <Menu className="h-5 w-5" />
             </Button>
             <div className="w-6 h-6 rounded-md gradient-primary flex items-center justify-center">
@@ -219,7 +234,7 @@ export default function AppLayout() {
               onClick={() => navigate(item.path)}
               className={cn(
                 "flex flex-col items-center gap-0.5 py-1 px-2 min-w-[44px] min-h-[44px] justify-center rounded-xl transition-all",
-                active ? "text-primary" : "text-muted-foreground"
+                active ? "text-primary" : "text-muted-foreground",
               )}
             >
               <div className="relative">
