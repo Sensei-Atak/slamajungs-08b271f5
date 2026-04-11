@@ -12,6 +12,8 @@ import PhotoCard from "@/components/feed/PhotoCard";
 import DailyWinner from "@/components/feed/DailyWinner";
 import GameDayBanner from "@/components/feed/GameDayBanner";
 import TaskReminder from "@/components/feed/TaskReminder";
+import MonthlyMealRanking from "@/components/feed/MonthlyMealRanking";
+import MealHallOfFame from "@/components/feed/MealHallOfFame";
 import { toast } from "sonner";
 import { startOfDay, endOfDay, format } from "date-fns";
 
@@ -244,6 +246,8 @@ export default function Feed() {
       ))}
 
       <DailyWinner winner={dailyWinner} />
+      <MonthlyMealRanking meals={meals} ratings={ratings} />
+      <MealHallOfFame />
 
       {timeline.length === 0 ? (
         <Card>
