@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_sessions: {
+        Row: {
+          duration_seconds: number
+          id: string
+          last_seen_at: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          duration_seconds?: number
+          id?: string
+          last_seen_at?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          duration_seconds?: number
+          id?: string
+          last_seen_at?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -247,6 +271,33 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_meal_winners: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          player_id: string
+          player_name: string
+          win_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          player_id: string
+          player_name: string
+          win_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          player_id?: string
+          player_name?: string
+          win_count?: number
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -277,6 +328,24 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      page_visits: {
+        Row: {
+          id: string
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          visited_at?: string
         }
         Relationships: []
       }
