@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Users, Home, Navigation } from "lucide-react";
+import { Clock, MapPin, Users, Home, Navigation } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface GameDayBannerProps {
