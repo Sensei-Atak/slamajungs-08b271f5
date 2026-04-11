@@ -45,7 +45,6 @@ export default function AppLayout() {
 
   // Activity tracking (invisible to players)
   useActivityTracker(user?.id);
-  const [pendingResets, setPendingResets] = useState(0);
 
   useEffect(() => {
     if (!isCoach) return;
