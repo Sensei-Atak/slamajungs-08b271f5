@@ -244,11 +244,6 @@ export default function Feed() {
       ))}
 
       <DailyWinner winner={dailyWinner} />
-      {/* Show MonthlyMealRanking only in last 3 days of month */}
-      {differenceInDays(endOfMonth(new Date()), new Date()) <= 2 && (
-        <MonthlyMealRanking meals={meals} ratings={ratings} />
-      )}
-      <MealHallOfFame />
 
       {timeline.length === 0 ? (
         <Card>
