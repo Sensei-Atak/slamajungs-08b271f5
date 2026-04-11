@@ -41,6 +41,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
 
   // Activity tracking (invisible to players)
@@ -133,13 +134,60 @@ export default function AppLayout() {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Overlay */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-56 bg-card border-r border-border flex flex-col animate-in slide-in-from-left">
+            <div className="flex items-center gap-2 p-4 border-b border-border">
+              <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(false)} className="min-w-[44px] min-h-[44px]">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold text-sm truncate flex-1">🏀</span>
+            </div>
+            <nav className="flex-1 flex flex-col gap-1 p-2">
+              {filteredItems.map((item) => {
+                const active = location.pathname.startsWith(item.path);
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => { navigate(item.path); setMobileSidebarOpen(false); }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors min-h-[44px]",
+                      active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-accent"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.path === "/verwaltung" && pendingResets > 0 && (
+                      <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs">{pendingResets}</Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="p-2 border-t border-border">
+              <button onClick={() => { handleSignOut(); setMobileSidebarOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent w-full min-h-[44px]">
+                <LogOut className="h-5 w-5 shrink-0" />
+                <span>Abmelden</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
-        <div className="flex items-center justify-end gap-2 p-2 md:hidden">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <div className="flex items-center justify-between gap-2 p-2 md:hidden">
+          <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)} className="min-w-[36px] min-h-[36px]">
+            <Menu className="h-5 w-5" />
           </Button>
-          <NotificationBell />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <NotificationBell />
+          </div>
         </div>
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
           <Outlet />
