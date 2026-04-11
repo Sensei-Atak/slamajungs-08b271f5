@@ -9,7 +9,11 @@ import {
   User,
   LogOut,
   Menu,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
