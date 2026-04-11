@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -38,7 +38,6 @@ export default function Login() {
     setLoading(true);
     try {
       let loginEmail = email;
-      // If no @ symbol, treat as username
       if (!email.includes("@")) {
         const { data, error } = await supabase.rpc("get_email_by_username", { p_username: email });
         if (error || !data) {
@@ -89,9 +88,7 @@ export default function Login() {
       const { error } = await supabase.auth.signUp({
         email: generatedEmail,
         password,
-        options: {
-          data: { name: fullName, role: "spieler" },
-        },
+        options: { data: { name: fullName, role: "spieler" } },
       });
       if (error) {
         if (error.message.includes("already been registered") || error.message.includes("already registered")) {
@@ -118,9 +115,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke("request-password-reset", {
-        body: { email },
-      });
+      const { error } = await supabase.functions.invoke("request-password-reset", { body: { email } });
       if (error) throw error;
       setResetSent(true);
     } catch (err: any) {
@@ -130,114 +125,121 @@ export default function Login() {
     }
   };
 
-  const title =
-    mode === "reset" ? "Passwort zurücksetzen" :
-    mode === "signup" ? "Registrieren" :
-    "Slama Jama Gröbenzell";
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {mode === "reset" ? (
-            resetSent ? (
-              <div className="space-y-4 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Anfrage gesendet! Dein Coach wurde benachrichtigt und wird dir ein neues temporäres Passwort geben.
-                </p>
-                <Button type="button" variant="ghost" className="w-full" onClick={() => { setMode("login"); setResetSent(false); }}>
-                  Zurück zur Anmeldung
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleReset} className="space-y-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Gib deine E-Mail-Adresse ein. Dein Coach erhält eine Anfrage und kann dir ein neues Passwort erstellen.
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="reset-email">E-Mail</Label>
-                  <Input id="reset-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm space-y-6">
+        {/* Logo / Branding */}
+        <div className="text-center space-y-2">
+          <div className="w-16 h-16 rounded-2xl gradient-primary mx-auto flex items-center justify-center shadow-lg">
+            <span className="text-3xl">🏀</span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Slama Jama</h1>
+          <p className="text-sm text-muted-foreground">Gröbenzell</p>
+        </div>
+
+        <Card className="card-elevated border-border/60">
+          <CardHeader className="pb-2 pt-6 px-6">
+            <h2 className="text-lg font-semibold text-center">
+              {mode === "reset" ? "Passwort zurücksetzen" : mode === "signup" ? "Registrieren" : "Willkommen zurück"}
+            </h2>
+          </CardHeader>
+          <CardContent className="px-6 pb-6">
+            {mode === "reset" ? (
+              resetSent ? (
+                <div className="space-y-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-green-500/10 mx-auto flex items-center justify-center">
+                    <span className="text-2xl">✉️</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Anfrage gesendet! Dein Coach wurde benachrichtigt und wird dir ein neues temporäres Passwort geben.
+                  </p>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => { setMode("login"); setResetSent(false); }}>
+                    Zurück zur Anmeldung
+                  </Button>
                 </div>
-                <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
-                  {loading ? "Wird gesendet..." : "Anfrage senden"}
+              ) : (
+                <form onSubmit={handleReset} className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Gib deine E-Mail ein. Dein Coach kann dir ein neues Passwort erstellen.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">E-Mail</Label>
+                    <Input id="reset-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
+                  </div>
+                  <Button type="submit" className="w-full h-11 gradient-primary text-primary-foreground font-semibold" disabled={loading}>
+                    {loading ? "Wird gesendet..." : "Anfrage senden"}
+                  </Button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("login")}>
+                    Zurück zur Anmeldung
+                  </Button>
+                </form>
+              )
+            ) : mode === "signup" ? (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Vorname</Label>
+                    <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Nachname</Label>
+                    <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="h-11" />
+                  </div>
+                </div>
+                {firstName.trim() && lastName.trim() && (
+                  <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                    Deine E-Mail: <span className="font-medium text-foreground">{normalizeForEmail(firstName.trim())}.{normalizeForEmail(lastName.trim())}@sj.de</span>
+                  </p>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode">Team-Code</Label>
+                  <Input id="inviteCode" type="text" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required placeholder="Code vom Coach" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signupPassword">Passwort</Label>
+                  <Input id="signupPassword" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
+                  <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} className="h-11" />
+                </div>
+                <Button type="submit" className="w-full h-11 gradient-primary text-primary-foreground font-semibold" disabled={loading}>
+                  {loading ? "Wird registriert..." : "Registrieren"}
                 </Button>
                 <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("login")}>
-                  Zurück zur Anmeldung
+                  Bereits registriert? Anmelden
                 </Button>
               </form>
-            )
-          ) : mode === "signup" ? (
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Vorname</Label>
-                <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Nachname</Label>
-                <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-              </div>
-              {firstName.trim() && lastName.trim() && (
-                <p className="text-xs text-muted-foreground">
-                  Deine E-Mail: <span className="font-medium">{normalizeForEmail(firstName.trim())}.{normalizeForEmail(lastName.trim())}@sj.de</span>
-                </p>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="inviteCode">Team-Code</Label>
-                <Input id="inviteCode" type="text" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required placeholder="Code vom Coach" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signupPassword">Passwort</Label>
-                <Input id="signupPassword" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
-              </div>
-              <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
-                {loading ? "Wird registriert..." : "Registrieren"}
-              </Button>
-              <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("login")}>
-                Bereits registriert? Anmelden
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-Mail oder Benutzername</Label>
-                <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="E-Mail oder Benutzername" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Passwort</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked === true)}
-                />
-                <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
-                  Auf diesem Gerät angemeldet bleiben
-                </Label>
-              </div>
-              <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
-                {loading ? "Wird angemeldet..." : "Anmelden"}
-              </Button>
-              <div className="flex flex-col gap-1">
-                <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("signup")}>
-                  Noch kein Konto? Registrieren
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-Mail oder Benutzername</Label>
+                  <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="E-Mail oder Benutzername" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Passwort</Label>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="rememberMe" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked === true)} />
+                  <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">Angemeldet bleiben</Label>
+                </div>
+                <Button type="submit" className="w-full h-11 gradient-primary text-primary-foreground font-semibold" disabled={loading}>
+                  {loading ? "Wird angemeldet..." : "Anmelden"}
                 </Button>
-                <Button type="button" variant="link" className="w-full" onClick={() => setMode("reset")}>
-                  Passwort vergessen?
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+                <div className="flex flex-col gap-1">
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setMode("signup")}>
+                    Noch kein Konto? <span className="text-primary font-semibold ml-1">Registrieren</span>
+                  </Button>
+                  <Button type="button" variant="link" className="w-full text-xs text-muted-foreground" onClick={() => setMode("reset")}>
+                    Passwort vergessen?
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

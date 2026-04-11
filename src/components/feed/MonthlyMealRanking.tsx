@@ -65,21 +65,36 @@ export default function MonthlyMealRanking({ meals, ratings }: MonthlyMealRankin
   const monthName = format(new Date(), "MMMM yyyy");
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+    <Card className="card-elevated overflow-hidden border-primary/20">
+      <div className="gradient-primary h-1" />
       <CardContent className="pt-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Medal className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold text-sm">Monatsranking – {monthName}</h2>
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center shadow-sm">
+            <Medal className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="font-bold text-sm">Monatsranking</h2>
+            <p className="text-xs text-muted-foreground">{monthName}</p>
+          </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {ranking.slice(0, 5).map((entry, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <span className="w-6 text-center font-bold text-sm">
+            <div
+              key={i}
+              className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+                i === 0
+                  ? "bg-primary/5 dark:bg-primary/10 border border-primary/10"
+                  : "hover:bg-muted/50"
+              }`}
+            >
+              <span className="w-7 text-center font-bold text-base">
                 {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
               </span>
-              <span className="flex-1 text-sm font-medium">{entry.name}</span>
-              <span className="text-sm font-bold text-primary">{entry.count}×</span>
-              <Trophy className="h-3.5 w-3.5 text-primary/60" />
+              <span className={`flex-1 text-sm ${i === 0 ? "font-bold" : "font-medium"}`}>{entry.name}</span>
+              <div className="flex items-center gap-1.5 bg-primary/10 dark:bg-primary/15 rounded-full px-2.5 py-0.5">
+                <span className="text-sm font-bold text-primary">{entry.count}×</span>
+                <Trophy className="h-3.5 w-3.5 text-primary/70" />
+              </div>
             </div>
           ))}
         </div>

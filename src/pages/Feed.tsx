@@ -225,7 +225,12 @@ export default function Feed() {
     <div className="space-y-4">
       <TaskReminder />
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Feed</h1>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm">
+            <Utensils className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <h1 className="text-xl font-bold">Feed</h1>
+        </div>
         <PostTypeSelector onSelect={(type) => setActiveForm(type)} />
       </div>
 

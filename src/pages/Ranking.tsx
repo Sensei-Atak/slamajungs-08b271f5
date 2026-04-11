@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Trophy } from "lucide-react";
 import MonthlyMealRanking from "@/components/feed/MonthlyMealRanking";
 import MealHallOfFame from "@/components/feed/MealHallOfFame";
 
@@ -52,12 +53,31 @@ export default function Ranking() {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center py-12 text-muted-foreground">Laden...</div>;
+    return (
+      <div className="flex justify-center py-12 text-muted-foreground">
+        <div className="animate-pulse flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
+            <Trophy className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <span className="text-sm">Laden...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">🏆 Meal-Ranking</h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-md">
+          <Trophy className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold">Meal-Ranking</h1>
+          <p className="text-xs text-muted-foreground">Wer kocht am besten?</p>
+        </div>
+      </div>
+
       <MonthlyMealRanking meals={meals} ratings={ratings} />
       <MealHallOfFame />
     </div>

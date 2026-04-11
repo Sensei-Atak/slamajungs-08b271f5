@@ -46,7 +46,6 @@ export default function AppLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [pendingResets, setPendingResets] = useState(0);
 
-  // Activity tracking (invisible to players)
   useActivityTracker(user?.id);
 
   useEffect(() => {
@@ -77,30 +76,33 @@ export default function AppLayout() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r border-border bg-card transition-all duration-200",
+          "hidden md:flex flex-col border-r border-border/60 bg-card transition-all duration-200",
           sidebarOpen ? "w-56" : "w-16"
         )}
       >
-        <div className="flex items-center gap-2 p-4 border-b border-border">
+        <div className="flex items-center gap-2 p-3 border-b border-border/60">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="min-w-[44px] min-h-[44px]"
+            className="min-w-[40px] min-h-[40px] rounded-xl"
           >
             <Menu className="h-5 w-5" />
           </Button>
           {sidebarOpen && (
             <>
-              <span className="font-semibold text-sm truncate flex-1">🏀</span>
-              <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
+              <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shadow-sm">
+                <span className="text-sm">🏀</span>
+              </div>
+              <span className="font-bold text-sm truncate flex-1">Slama Jama</span>
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px] rounded-xl">
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
               <NotificationBell />
             </>
           )}
         </div>
-        <nav className="flex-1 flex flex-col gap-1 p-2">
+        <nav className="flex-1 flex flex-col gap-0.5 p-2">
           {filteredItems.map((item) => {
             const active = location.pathname.startsWith(item.path);
             return (
@@ -108,16 +110,16 @@ export default function AppLayout() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors min-h-[44px]",
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all min-h-[42px]",
                   active
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-accent"
+                    ? "bg-primary/10 text-primary font-semibold shadow-sm"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
-                {sidebarOpen && <span className="flex-1">{item.label}</span>}
+                {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
                 {item.path === "/verwaltung" && pendingResets > 0 && (
-                  <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs">
+                  <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs rounded-full">
                     {pendingResets}
                   </Badge>
                 )}
@@ -125,10 +127,10 @@ export default function AppLayout() {
             );
           })}
         </nav>
-        <div className="p-2 border-t border-border">
+        <div className="p-2 border-t border-border/60">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent w-full min-h-[44px]"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive w-full min-h-[42px] transition-colors"
           >
             <LogOut className="h-5 w-5 shrink-0" />
             {sidebarOpen && <span>Abmelden</span>}
@@ -139,15 +141,18 @@ export default function AppLayout() {
       {/* Mobile Sidebar Overlay */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-56 bg-card border-r border-border flex flex-col animate-in slide-in-from-left">
-            <div className="flex items-center gap-2 p-4 border-b border-border">
-              <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(false)} className="min-w-[44px] min-h-[44px]">
+          <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-border/60 flex flex-col animate-in slide-in-from-left shadow-xl">
+            <div className="flex items-center gap-3 p-4 border-b border-border/60">
+              <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(false)} className="min-w-[40px] min-h-[40px] rounded-xl">
                 <Menu className="h-5 w-5" />
               </Button>
-              <span className="font-semibold text-sm truncate flex-1">🏀</span>
+              <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shadow-sm">
+                <span className="text-sm">🏀</span>
+              </div>
+              <span className="font-bold text-sm truncate">Slama Jama</span>
             </div>
-            <nav className="flex-1 flex flex-col gap-1 p-2">
+            <nav className="flex-1 flex flex-col gap-0.5 p-2">
               {filteredItems.map((item) => {
                 const active = location.pathname.startsWith(item.path);
                 return (
@@ -155,21 +160,23 @@ export default function AppLayout() {
                     key={item.path}
                     onClick={() => { navigate(item.path); setMobileSidebarOpen(false); }}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors min-h-[44px]",
-                      active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-accent"
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all min-h-[44px]",
+                      active
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                     )}
                   >
                     <item.icon className="h-5 w-5 shrink-0" />
-                    <span className="flex-1">{item.label}</span>
+                    <span className="flex-1 text-left">{item.label}</span>
                     {item.path === "/verwaltung" && pendingResets > 0 && (
-                      <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs">{pendingResets}</Badge>
+                      <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-xs rounded-full">{pendingResets}</Badge>
                     )}
                   </button>
                 );
               })}
             </nav>
-            <div className="p-2 border-t border-border">
-              <button onClick={() => { handleSignOut(); setMobileSidebarOpen(false); }} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent w-full min-h-[44px]">
+            <div className="p-2 border-t border-border/60">
+              <button onClick={() => { handleSignOut(); setMobileSidebarOpen(false); }} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive w-full min-h-[44px] transition-colors">
                 <LogOut className="h-5 w-5 shrink-0" />
                 <span>Abmelden</span>
               </button>
@@ -180,12 +187,18 @@ export default function AppLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
-        <div className="flex items-center justify-between gap-2 p-2 md:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)} className="min-w-[36px] min-h-[36px]">
-            <Menu className="h-5 w-5" />
-          </Button>
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between gap-2 px-3 py-2 md:hidden border-b border-border/40">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
+            <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)} className="min-w-[36px] min-h-[36px] rounded-xl">
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="w-6 h-6 rounded-md gradient-primary flex items-center justify-center">
+              <span className="text-xs">🏀</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px] rounded-xl">
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
             <NotificationBell />
@@ -197,7 +210,7 @@ export default function AppLayout() {
       </div>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-card border-t border-border flex justify-around items-center h-16 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden glass-surface border-t border-border/40 flex justify-around items-center h-16 z-50">
         {filteredItems.map((item) => {
           const active = location.pathname.startsWith(item.path);
           return (
@@ -205,19 +218,19 @@ export default function AppLayout() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center gap-0.5 py-1 px-2 min-w-[44px] min-h-[44px] justify-center",
+                "flex flex-col items-center gap-0.5 py-1 px-2 min-w-[44px] min-h-[44px] justify-center rounded-xl transition-all",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
               <div className="relative">
-                <item.icon className="h-5 w-5" />
+                <item.icon className={cn("h-5 w-5 transition-transform", active && "scale-110")} />
                 {item.path === "/verwaltung" && pendingResets > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[9px] rounded-full h-4 min-w-[16px] flex items-center justify-center px-0.5">
                     {pendingResets}
                   </span>
                 )}
               </div>
-              <span className="text-[10px]">{item.label}</span>
+              <span className={cn("text-[10px]", active && "font-semibold")}>{item.label}</span>
             </button>
           );
         })}
