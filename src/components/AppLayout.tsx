@@ -11,6 +11,7 @@ import {
   Menu,
   Sun,
   Moon,
+  Trophy,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
@@ -30,6 +31,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Feed", path: "/feed", icon: Utensils },
   { label: "Aufgaben", path: "/aufgaben", icon: ClipboardList },
+  { label: "Ranking", path: "/ranking", icon: Trophy },
   { label: "Statistiken", path: "/statistiken", icon: BarChart3 },
   { label: "Verwaltung", path: "/verwaltung", icon: Settings, coachOnly: true },
   { label: "Mein Profil", path: "/profil", icon: User },
