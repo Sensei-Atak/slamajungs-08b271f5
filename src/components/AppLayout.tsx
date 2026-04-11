@@ -41,7 +41,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [pendingResets, setPendingResets] = useState(0);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Activity tracking (invisible to players)
   useActivityTracker(user?.id);
