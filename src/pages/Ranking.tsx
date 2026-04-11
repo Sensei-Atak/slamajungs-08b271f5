@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Trophy } from "lucide-react";
 import MonthlyMealRanking from "@/components/feed/MonthlyMealRanking";
 import MealHallOfFame from "@/components/feed/MealHallOfFame";
 
