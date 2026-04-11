@@ -55,72 +55,83 @@ export default function HangoutCard({ post, details, reactions, comments, onDele
   };
 
   return (
-    <Card className="border-blue-500/20">
-      <CardContent className="pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-xs font-medium">
+    <Card className="card-elevated overflow-hidden border-blue-500/20 dark:border-blue-400/15">
+      <CardContent className="p-0">
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold">
               {getInitials(post.profileName)}
             </div>
             <div>
-              <p className="text-sm font-medium">{post.profileName}</p>
+              <p className="text-sm font-semibold">{post.profileName}</p>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: de })}
               </p>
             </div>
           </div>
           {(isCoach || post.user_id === user?.id) && (
-            <Button variant="ghost" size="icon" onClick={() => onDelete(post.id)} className="min-w-[44px] min-h-[44px] text-muted-foreground hover:text-destructive">
+            <Button variant="ghost" size="icon" onClick={() => onDelete(post.id)} className="min-w-[36px] min-h-[36px] text-muted-foreground hover:text-destructive rounded-full">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
         </div>
 
-        <div className="bg-blue-500/5 rounded-lg p-3 space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400">
-            <MapPin className="h-4 w-4" /> Wer hat Bock?
+        <div className="mx-4 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 p-4 space-y-3 border border-blue-500/10 dark:border-blue-400/10">
+          <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+            <div className="w-7 h-7 rounded-full bg-blue-500/15 flex items-center justify-center">
+              <MapPin className="h-3.5 w-3.5" />
+            </div>
+            Wer hat Bock?
           </div>
           {details && (
             <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5 bg-background/60 dark:bg-background/30 rounded-full px-3 py-1">
                 <Calendar className="h-3.5 w-3.5" />
                 {format(new Date(details.date), "dd.MM.yyyy")}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5 bg-background/60 dark:bg-background/30 rounded-full px-3 py-1">
                 <Clock className="h-3.5 w-3.5" />
                 {details.time.slice(0, 5)} Uhr
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5 bg-background/60 dark:bg-background/30 rounded-full px-3 py-1">
                 <MapPin className="h-3.5 w-3.5" />
                 {details.location}
               </span>
             </div>
           )}
-          {post.caption && <p className="text-sm">{post.caption}</p>}
+          {post.caption && <p className="text-sm leading-relaxed">{post.caption}</p>}
         </div>
 
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn("gap-1.5 min-h-[44px]", myReaction === "up" && "text-green-500 bg-green-500/10")}
-            onClick={() => handleReact("up")}
-          >
-            <ThumbsUp className="h-4 w-4" />
-            <span className="text-sm">{upCount}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn("gap-1.5 min-h-[44px]", myReaction === "down" && "text-red-500 bg-red-500/10")}
-            onClick={() => handleReact("down")}
-          >
-            <ThumbsDown className="h-4 w-4" />
-            <span className="text-sm">{downCount}</span>
-          </Button>
-        </div>
+        <div className="px-4 pb-4">
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/60">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "gap-1.5 min-h-[40px] rounded-full px-4 transition-all",
+                myReaction === "up" ? "text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-green-500/15" : "hover:bg-muted"
+              )}
+              onClick={() => handleReact("up")}
+            >
+              <ThumbsUp className={cn("h-4 w-4", myReaction === "up" && "scale-110")} />
+              <span className="text-sm font-medium">{upCount}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "gap-1.5 min-h-[40px] rounded-full px-4 transition-all",
+                myReaction === "down" ? "text-red-500 bg-red-500/10 hover:bg-red-500/15" : "hover:bg-muted"
+              )}
+              onClick={() => handleReact("down")}
+            >
+              <ThumbsDown className={cn("h-4 w-4", myReaction === "down" && "scale-110")} />
+              <span className="text-sm font-medium">{downCount}</span>
+            </Button>
+          </div>
 
-        <PostComments postId={post.id} comments={comments} onRefresh={onRefresh} />
+          <PostComments postId={post.id} comments={comments} onRefresh={onRefresh} />
+        </div>
       </CardContent>
     </Card>
   );
