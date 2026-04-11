@@ -135,7 +135,10 @@ export default function AppLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
-        <div className="flex items-center justify-end p-2 md:hidden">
+        <div className="flex items-center justify-end gap-2 p-2 md:hidden">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <NotificationBell />
         </div>
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
