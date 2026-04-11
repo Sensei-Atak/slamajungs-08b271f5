@@ -17,6 +17,7 @@ const GameSummary = lazy(() => import("@/pages/GameSummary"));
 const PlayerStats = lazy(() => import("@/pages/PlayerStats"));
 const Verwaltung = lazy(() => import("@/pages/Verwaltung"));
 const Profil = lazy(() => import("@/pages/Profil"));
+const Ranking = lazy(() => import("@/pages/Ranking"));
 const ChangePassword = lazy(() => import("@/pages/ChangePassword"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/statistiken/spiel/:gameId" element={<GameSummary />} />
                 <Route path="/statistiken/spieler/:playerId" element={<PlayerStats />} />
                 <Route path="/verwaltung" element={<Verwaltung />} />
+                <Route path="/ranking" element={<Ranking />} />
                 <Route path="/profil" element={<Profil />} />
               </Route>
               <Route path="*" element={<NotFound />} />
