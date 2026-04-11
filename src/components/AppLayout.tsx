@@ -89,7 +89,7 @@ export default function AppLayout() {
           </Button>
           {sidebarOpen && (
             <>
-              <span className="font-semibold text-sm truncate flex-1">🏀 Slama Jama</span>
+              <span className="font-semibold text-sm truncate flex-1">🏀</span>
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="min-w-[36px] min-h-[36px]">
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
