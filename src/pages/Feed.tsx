@@ -250,6 +250,7 @@ export default function Feed() {
       {differenceInDays(endOfMonth(new Date()), new Date()) <= 2 && (
         <MonthlyMealRanking meals={meals} ratings={ratings} />
       )}
+      <MealHallOfFame />
 
       {timeline.length === 0 ? (
         <Card>
