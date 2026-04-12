@@ -53,6 +53,7 @@ export function CompactPlayerCard({
       color,
       made,
       attempted,
+      madeKey,
       attemptedKey,
     }: {
       label: string;
@@ -80,11 +81,22 @@ export function CompactPlayerCard({
           </button>
           <button
             type="button"
+            onClick={() => {
+              onUpdateStat(madeKey, -1);
+              onUpdateStat(attemptedKey, -1);
+            }}
+            className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:bg-muted text-[10px] active:scale-90 select-none touch-manipulation"
+            title="Treffer entfernen"
+          >
+            −✓
+          </button>
+          <button
+            type="button"
             onClick={() => onUpdateStat(attemptedKey, -1)}
             className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:bg-muted text-[10px] active:scale-90 select-none touch-manipulation"
             title="Versuch entfernen"
           >
-            −
+            −✗
           </button>
         </div>
       );
