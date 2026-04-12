@@ -53,6 +53,7 @@ export function CompactPlayerCard({
       color,
       made,
       attempted,
+      madeKey,
       attemptedKey,
     }: {
       label: string;
