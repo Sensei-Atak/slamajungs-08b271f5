@@ -15,6 +15,7 @@ interface GameData {
   opponent: string;
   score_home: number;
   score_away: number;
+  quarter_scores?: { label: string; home: number; away: number }[];
 }
 
 interface StatRow {
