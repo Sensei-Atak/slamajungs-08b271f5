@@ -105,6 +105,40 @@ export default function GameSummary() {
         )}
       </div>
 
+      {game.quarter_scores && game.quarter_scores.length > 0 && (
+        <Card>
+          <CardContent className="pt-4 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Team</TableHead>
+                  {game.quarter_scores.map((q, i) => (
+                    <TableHead key={i} className="text-center">{q.label}</TableHead>
+                  ))}
+                  <TableHead className="text-center font-bold">Gesamt</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Slama Jama</TableCell>
+                  {game.quarter_scores.map((q, i) => (
+                    <TableCell key={i} className="text-center tabular-nums">{q.home}</TableCell>
+                  ))}
+                  <TableCell className="text-center font-bold tabular-nums">{game.score_home}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">{game.opponent}</TableCell>
+                  {game.quarter_scores.map((q, i) => (
+                    <TableCell key={i} className="text-center tabular-nums">{q.away}</TableCell>
+                  ))}
+                  <TableCell className="text-center font-bold tabular-nums">{game.score_away}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
         {rows.map((r) => (
