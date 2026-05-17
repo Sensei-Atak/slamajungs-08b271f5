@@ -119,6 +119,7 @@ export type Database = {
           location: string | null
           meeting_time: string | null
           opponent: string
+          quarter_scores: Json
           score_away: number
           score_home: number
           status: string
@@ -132,6 +133,7 @@ export type Database = {
           location?: string | null
           meeting_time?: string | null
           opponent: string
+          quarter_scores?: Json
           score_away?: number
           score_home?: number
           status?: string
@@ -145,6 +147,7 @@ export type Database = {
           location?: string | null
           meeting_time?: string | null
           opponent?: string
+          quarter_scores?: Json
           score_away?: number
           score_home?: number
           status?: string
