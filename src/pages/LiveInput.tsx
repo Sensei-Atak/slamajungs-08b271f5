@@ -63,6 +63,49 @@ export default function LiveInput() {
   const [captainId, setCaptainId] = useState<string | null>(null);
   const [startingFiveIds, setStartingFiveIds] = useState<string[]>([]);
 
+  // Quarter tracking
+  type QuarterEntry = { label: string; home: number; away: number };
+  const [quarterScores, setQuarterScores] = useState<QuarterEntry[]>([]);
+  const [currentPeriod, setCurrentPeriod] = useState<string>("Q1");
+  const [isHalftime, setIsHalftime] = useState(false);
+  const [baselineHome, setBaselineHome] = useState(0);
+  const [baselineAway, setBaselineAway] = useState(0);
+
+  const nextPeriodLabel = (current: string): string => {
+    if (current === "Q1") return "Q2";
+    if (current === "Q2") return "Q3";
+    if (current === "Q3") return "Q4";
+    if (current === "Q4") return "OT1";
+    const m = current.match(/^OT(\d+)$/);
+    if (m) return `OT${parseInt(m[1], 10) + 1}`;
+    return "Q1";
+  };
+
+  const finishQuarter = useCallback(() => {
+    const entry: QuarterEntry = {
+      label: currentPeriod,
+      home: Math.max(0, scoreHome - baselineHome),
+      away: Math.max(0, scoreAway - baselineAway),
+    };
+    setQuarterScores((prev) => [...prev, entry]);
+    setBaselineHome(scoreHome);
+    setBaselineAway(scoreAway);
+    if (currentPeriod === "Q2") {
+      setIsHalftime(true);
+    } else {
+      setCurrentPeriod(nextPeriodLabel(currentPeriod));
+    }
+  }, [currentPeriod, scoreHome, scoreAway, baselineHome, baselineAway]);
+
+  const endHalftime = useCallback(() => {
+    setIsHalftime(false);
+    setCurrentPeriod("Q3");
+  }, []);
+
+  const startOvertime = useCallback(() => {
+    setCurrentPeriod(nextPeriodLabel(currentPeriod));
+  }, [currentPeriod]);
+
   useEffect(() => {
     if (!isCoach) { navigate("/statistiken"); return; }
     const load = async () => {
