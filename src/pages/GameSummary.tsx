@@ -50,7 +50,7 @@ export default function GameSummary() {
         supabase.from("games").select("*").eq("id", gameId).single(),
         supabase.from("player_stats").select("*").eq("game_id", gameId),
       ]);
-      if (gameRes.data) setGame(gameRes.data);
+      if (gameRes.data) setGame(gameRes.data as unknown as GameData);
       if (statsRes.data) {
         const playerIds = statsRes.data.map((s) => s.player_id);
         const { data: profiles } = await supabase
