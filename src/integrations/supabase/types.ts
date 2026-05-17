@@ -494,6 +494,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_guest: boolean
           jersey_number: number | null
           must_change_password: boolean
           name: string
@@ -507,6 +508,7 @@ export type Database = {
           created_at?: string
           id: string
           is_active?: boolean
+          is_guest?: boolean
           jersey_number?: number | null
           must_change_password?: boolean
           name: string
@@ -520,6 +522,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_guest?: boolean
           jersey_number?: number | null
           must_change_password?: boolean
           name?: string
