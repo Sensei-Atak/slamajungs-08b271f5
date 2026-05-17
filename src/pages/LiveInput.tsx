@@ -102,10 +102,6 @@ export default function LiveInput() {
     setCurrentPeriod("Q3");
   }, []);
 
-  const startOvertime = useCallback(() => {
-    setCurrentPeriod(nextPeriodLabel(currentPeriod));
-  }, [currentPeriod]);
-
   useEffect(() => {
     if (!isCoach) { navigate("/statistiken"); return; }
     const load = async () => {
