@@ -342,13 +342,12 @@ export default function LiveInput() {
                   {currentPeriod}
                 </span>
                 <Button onClick={finishQuarter} size="sm" variant="outline" className="h-8 text-xs">
-                  {currentPeriod === "Q2" ? "→ Halbzeit" : "Viertel beenden"}
+                  {currentPeriod === "Q2"
+                    ? "→ Halbzeit"
+                    : currentPeriod.startsWith("OT")
+                      ? "OT beenden"
+                      : "Viertel beenden"}
                 </Button>
-                {(currentPeriod === "Q4" || currentPeriod.startsWith("OT")) && quarterScores.some((q) => q.label === currentPeriod) === false && quarterScores.length >= 4 && scoreHome === scoreAway && (
-                  <Button onClick={startOvertime} size="sm" variant="outline" className="h-8 text-xs">
-                    + Verlängerung
-                  </Button>
-                )}
               </>
             )}
             <Button onClick={handleSave} disabled={saving} size="sm" className="h-8 text-xs">
