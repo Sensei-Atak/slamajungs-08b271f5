@@ -226,16 +226,25 @@ export default function LiveInput() {
     if (!opponent.trim()) { toast.error("Bitte Gegner eingeben"); return; }
     setSaving(true);
     try {
+      // Auto-finalize current period on save if it has scoring delta
+      let finalQs = quarterScores;
+      const deltaHome = scoreHome - baselineHome;
+      const deltaAway = scoreAway - baselineAway;
+      if (deltaHome > 0 || deltaAway > 0) {
+        finalQs = [...finalQs, { label: currentPeriod, home: Math.max(0, deltaHome), away: Math.max(0, deltaAway) }];
+      }
       let gId = existingGameId;
       if (gId) {
         await supabase.from("games").update({
           date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
-        }).eq("id", gId);
+          quarter_scores: finalQs,
+        } as any).eq("id", gId);
         await supabase.from("player_stats").delete().eq("game_id", gId);
       } else {
         const { data: game, error } = await supabase.from("games").insert({
           date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
-        }).select().single();
+          quarter_scores: finalQs,
+        } as any).select().single();
         if (error || !game) throw error || new Error("Game creation failed");
         gId = game.id;
         setExistingGameId(gId);
