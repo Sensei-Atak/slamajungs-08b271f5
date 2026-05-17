@@ -63,6 +63,45 @@ export default function LiveInput() {
   const [captainId, setCaptainId] = useState<string | null>(null);
   const [startingFiveIds, setStartingFiveIds] = useState<string[]>([]);
 
+  // Quarter tracking
+  type QuarterEntry = { label: string; home: number; away: number };
+  const [quarterScores, setQuarterScores] = useState<QuarterEntry[]>([]);
+  const [currentPeriod, setCurrentPeriod] = useState<string>("Q1");
+  const [isHalftime, setIsHalftime] = useState(false);
+  const [baselineHome, setBaselineHome] = useState(0);
+  const [baselineAway, setBaselineAway] = useState(0);
+
+  const nextPeriodLabel = (current: string): string => {
+    if (current === "Q1") return "Q2";
+    if (current === "Q2") return "Q3";
+    if (current === "Q3") return "Q4";
+    if (current === "Q4") return "OT1";
+    const m = current.match(/^OT(\d+)$/);
+    if (m) return `OT${parseInt(m[1], 10) + 1}`;
+    return "Q1";
+  };
+
+  const finishQuarter = useCallback(() => {
+    const entry: QuarterEntry = {
+      label: currentPeriod,
+      home: Math.max(0, scoreHome - baselineHome),
+      away: Math.max(0, scoreAway - baselineAway),
+    };
+    setQuarterScores((prev) => [...prev, entry]);
+    setBaselineHome(scoreHome);
+    setBaselineAway(scoreAway);
+    if (currentPeriod === "Q2") {
+      setIsHalftime(true);
+    } else {
+      setCurrentPeriod(nextPeriodLabel(currentPeriod));
+    }
+  }, [currentPeriod, scoreHome, scoreAway, baselineHome, baselineAway]);
+
+  const endHalftime = useCallback(() => {
+    setIsHalftime(false);
+    setCurrentPeriod("Q3");
+  }, []);
+
   useEffect(() => {
     if (!isCoach) { navigate("/statistiken"); return; }
     const load = async () => {
@@ -87,7 +126,19 @@ export default function LiveInput() {
 
       if (gameId) {
         const { data: game } = await supabase.from("games").select("*").eq("id", gameId).single();
-        if (game) { setDate(game.date); setOpponent(game.opponent); setScoreHome(game.score_home); setScoreAway(game.score_away); }
+        if (game) {
+          setDate(game.date); setOpponent(game.opponent);
+          setScoreHome(game.score_home); setScoreAway(game.score_away);
+          const qs = (game as any).quarter_scores;
+          if (Array.isArray(qs) && qs.length > 0) {
+            setQuarterScores(qs);
+            const totalHome = qs.reduce((a: number, q: any) => a + (q.home || 0), 0);
+            const totalAway = qs.reduce((a: number, q: any) => a + (q.away || 0), 0);
+            setBaselineHome(totalHome);
+            setBaselineAway(totalAway);
+            setCurrentPeriod(nextPeriodLabel(qs[qs.length - 1].label));
+          }
+        }
         
         const { data: existingStats } = await supabase.from("player_stats").select("*").eq("game_id", gameId);
         if (players && existingStats && existingStats.length > 0) {
@@ -171,16 +222,25 @@ export default function LiveInput() {
     if (!opponent.trim()) { toast.error("Bitte Gegner eingeben"); return; }
     setSaving(true);
     try {
+      // Auto-finalize current period on save if it has scoring delta
+      let finalQs = quarterScores;
+      const deltaHome = scoreHome - baselineHome;
+      const deltaAway = scoreAway - baselineAway;
+      if (deltaHome > 0 || deltaAway > 0) {
+        finalQs = [...finalQs, { label: currentPeriod, home: Math.max(0, deltaHome), away: Math.max(0, deltaAway) }];
+      }
       let gId = existingGameId;
       if (gId) {
         await supabase.from("games").update({
           date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
-        }).eq("id", gId);
+          quarter_scores: finalQs,
+        } as any).eq("id", gId);
         await supabase.from("player_stats").delete().eq("game_id", gId);
       } else {
         const { data: game, error } = await supabase.from("games").insert({
           date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
-        }).select().single();
+          quarter_scores: finalQs,
+        } as any).select().single();
         if (error || !game) throw error || new Error("Game creation failed");
         gId = game.id;
         setExistingGameId(gId);
@@ -264,10 +324,42 @@ export default function LiveInput() {
             <Input type="number" min={0} value={scoreAway} onChange={(e) => setScoreAway(Number(e.target.value))} className="w-12 h-8 text-center text-xs" />
             <span className="text-xs text-muted-foreground truncate max-w-[50px]">{opponent || "Gegner"}</span>
           </div>
-          <Button onClick={handleSave} disabled={saving} size="sm" className="ml-auto h-8 text-xs">
-            {saving ? "..." : "Beenden"}
-          </Button>
+          <div className="flex items-center gap-1.5 ml-auto">
+            {isHalftime ? (
+              <>
+                <span className="text-xs font-bold text-primary px-2 py-1 rounded bg-primary/10">Halbzeit</span>
+                <Button onClick={endHalftime} size="sm" variant="outline" className="h-8 text-xs">
+                  Halbzeit beenden
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-xs font-bold text-primary px-2 py-1 rounded bg-primary/10 tabular-nums">
+                  {currentPeriod}
+                </span>
+                <Button onClick={finishQuarter} size="sm" variant="outline" className="h-8 text-xs">
+                  {currentPeriod === "Q2"
+                    ? "→ Halbzeit"
+                    : currentPeriod.startsWith("OT")
+                      ? "OT beenden"
+                      : "Viertel beenden"}
+                </Button>
+              </>
+            )}
+            <Button onClick={handleSave} disabled={saving} size="sm" className="h-8 text-xs">
+              {saving ? "..." : "Beenden"}
+            </Button>
+          </div>
         </div>
+        {quarterScores.length > 0 && (
+          <div className="flex gap-1 mt-1.5 flex-wrap text-[10px] text-muted-foreground">
+            {quarterScores.map((q, i) => (
+              <span key={i} className="px-1.5 py-0.5 rounded bg-muted tabular-nums">
+                {q.label}: {q.home}–{q.away}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Active 5 players - fill remaining space */}
