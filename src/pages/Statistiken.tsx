@@ -7,9 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { BarChart3, Play, Calendar, MapPin, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BarChart3, Play, Calendar, MapPin, Clock, UserPlus } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PlayerAvg {
   id: string;
@@ -46,6 +50,37 @@ export default function Statistiken() {
   const [loading, setLoading] = useState(true);
   const [scheduledGames, setScheduledGames] = useState<Game[]>([]);
   const [completedGames, setCompletedGames] = useState<Game[]>([]);
+  const [guestDialogOpen, setGuestDialogOpen] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestJersey, setGuestJersey] = useState("");
+  const [creatingGuest, setCreatingGuest] = useState(false);
+
+  const createGuestPlayer = async () => {
+    if (!guestName.trim()) {
+      toast.error("Bitte einen Namen eingeben");
+      return;
+    }
+    setCreatingGuest(true);
+    try {
+      const { error } = await supabase.from("profiles").insert({
+        id: crypto.randomUUID(),
+        name: guestName.trim(),
+        jersey_number: guestJersey ? parseInt(guestJersey, 10) : null,
+        role: "spieler",
+        is_active: true,
+        is_guest: true,
+      } as any);
+      if (error) throw error;
+      toast.success(`Gastspieler "${guestName.trim()}" angelegt`);
+      setGuestName("");
+      setGuestJersey("");
+      setGuestDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Fehler beim Anlegen");
+    } finally {
+      setCreatingGuest(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -137,16 +172,67 @@ export default function Statistiken() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-semibold">Statistiken</h1>
         {isCoach && (
-          <Button
-            onClick={() => navigate("/statistiken/live")}
-            className="min-h-[44px] gap-2"
-          >
-            <Play className="h-4 w-4" />
-            Neues Spiel
-          </Button>
+          <div className="flex gap-2">
+            <Dialog open={guestDialogOpen} onOpenChange={setGuestDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="min-h-[44px] gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Gastspieler
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Gastspieler anlegen</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="guest-name">Name</Label>
+                    <Input
+                      id="guest-name"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="z.B. Max Mustermann"
+                      maxLength={60}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="guest-jersey">Trikotnummer (optional)</Label>
+                    <Input
+                      id="guest-jersey"
+                      type="number"
+                      min={0}
+                      max={99}
+                      value={guestJersey}
+                      onChange={(e) => setGuestJersey(e.target.value)}
+                      placeholder="z.B. 23"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Gastspieler erscheinen in der Live-Statistik und in den Auswertungen,
+                    können sich aber nicht einloggen.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setGuestDialogOpen(false)}>
+                    Abbrechen
+                  </Button>
+                  <Button onClick={createGuestPlayer} disabled={creatingGuest}>
+                    {creatingGuest ? "Speichern..." : "Anlegen"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Button
+              onClick={() => navigate("/statistiken/live")}
+              className="min-h-[44px] gap-2"
+            >
+              <Play className="h-4 w-4" />
+              Neues Spiel
+            </Button>
+          </div>
         )}
       </div>
 
