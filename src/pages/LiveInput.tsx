@@ -328,10 +328,43 @@ export default function LiveInput() {
             <Input type="number" min={0} value={scoreAway} onChange={(e) => setScoreAway(Number(e.target.value))} className="w-12 h-8 text-center text-xs" />
             <span className="text-xs text-muted-foreground truncate max-w-[50px]">{opponent || "Gegner"}</span>
           </div>
-          <Button onClick={handleSave} disabled={saving} size="sm" className="ml-auto h-8 text-xs">
-            {saving ? "..." : "Beenden"}
-          </Button>
+          <div className="flex items-center gap-1.5 ml-auto">
+            {isHalftime ? (
+              <>
+                <span className="text-xs font-bold text-primary px-2 py-1 rounded bg-primary/10">Halbzeit</span>
+                <Button onClick={endHalftime} size="sm" variant="outline" className="h-8 text-xs">
+                  Halbzeit beenden
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-xs font-bold text-primary px-2 py-1 rounded bg-primary/10 tabular-nums">
+                  {currentPeriod}
+                </span>
+                <Button onClick={finishQuarter} size="sm" variant="outline" className="h-8 text-xs">
+                  {currentPeriod === "Q2" ? "→ Halbzeit" : "Viertel beenden"}
+                </Button>
+                {(currentPeriod === "Q4" || currentPeriod.startsWith("OT")) && quarterScores.some((q) => q.label === currentPeriod) === false && quarterScores.length >= 4 && scoreHome === scoreAway && (
+                  <Button onClick={startOvertime} size="sm" variant="outline" className="h-8 text-xs">
+                    + Verlängerung
+                  </Button>
+                )}
+              </>
+            )}
+            <Button onClick={handleSave} disabled={saving} size="sm" className="h-8 text-xs">
+              {saving ? "..." : "Beenden"}
+            </Button>
+          </div>
         </div>
+        {quarterScores.length > 0 && (
+          <div className="flex gap-1 mt-1.5 flex-wrap text-[10px] text-muted-foreground">
+            {quarterScores.map((q, i) => (
+              <span key={i} className="px-1.5 py-0.5 rounded bg-muted tabular-nums">
+                {q.label}: {q.home}–{q.away}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Active 5 players - fill remaining space */}
