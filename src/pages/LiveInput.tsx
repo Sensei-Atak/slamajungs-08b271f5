@@ -130,7 +130,19 @@ export default function LiveInput() {
 
       if (gameId) {
         const { data: game } = await supabase.from("games").select("*").eq("id", gameId).single();
-        if (game) { setDate(game.date); setOpponent(game.opponent); setScoreHome(game.score_home); setScoreAway(game.score_away); }
+        if (game) {
+          setDate(game.date); setOpponent(game.opponent);
+          setScoreHome(game.score_home); setScoreAway(game.score_away);
+          const qs = (game as any).quarter_scores;
+          if (Array.isArray(qs) && qs.length > 0) {
+            setQuarterScores(qs);
+            const totalHome = qs.reduce((a: number, q: any) => a + (q.home || 0), 0);
+            const totalAway = qs.reduce((a: number, q: any) => a + (q.away || 0), 0);
+            setBaselineHome(totalHome);
+            setBaselineAway(totalAway);
+            setCurrentPeriod(nextPeriodLabel(qs[qs.length - 1].label));
+          }
+        }
         
         const { data: existingStats } = await supabase.from("player_stats").select("*").eq("game_id", gameId);
         if (players && existingStats && existingStats.length > 0) {
