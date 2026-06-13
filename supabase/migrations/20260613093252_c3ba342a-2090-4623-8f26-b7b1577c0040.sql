@@ -1,0 +1,2 @@
+ALTER TABLE public.player_stats DROP CONSTRAINT IF EXISTS player_stats_player_id_fkey;
+ALTER TABLE public.player_stats ADD CONSTRAINT player_stats_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
