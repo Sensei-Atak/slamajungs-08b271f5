@@ -87,7 +87,8 @@ export default function LiveInput() {
       home: Math.max(0, scoreHome - baselineHome),
       away: Math.max(0, scoreAway - baselineAway),
     };
-    setQuarterScores((prev) => [...prev, entry]);
+    const newQs = [...quarterScores, entry];
+    setQuarterScores(newQs);
     setBaselineHome(scoreHome);
     setBaselineAway(scoreAway);
     if (currentPeriod === "Q2") {
@@ -95,11 +96,13 @@ export default function LiveInput() {
     } else {
       setCurrentPeriod(nextPeriodLabel(currentPeriod));
     }
-  }, [currentPeriod, scoreHome, scoreAway, baselineHome, baselineAway]);
+    void persistGame("live", { quarterScoresOverride: newQs, silent: true });
+  }, [currentPeriod, scoreHome, scoreAway, baselineHome, baselineAway, quarterScores]);
 
   const endHalftime = useCallback(() => {
     setIsHalftime(false);
     setCurrentPeriod("Q3");
+    void persistGame("live", { silent: true });
   }, []);
 
   useEffect(() => {
