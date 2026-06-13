@@ -364,6 +364,9 @@ export default function LiveInput() {
                 </Button>
               </>
             )}
+            <Button onClick={handleSaveProgress} disabled={saving} size="sm" variant="outline" className="h-8 text-xs">
+              Speichern
+            </Button>
             <Button onClick={handleSave} disabled={saving} size="sm" className="h-8 text-xs">
               {saving ? "..." : "Beenden"}
             </Button>
