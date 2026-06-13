@@ -87,7 +87,8 @@ export default function LiveInput() {
       home: Math.max(0, scoreHome - baselineHome),
       away: Math.max(0, scoreAway - baselineAway),
     };
-    setQuarterScores((prev) => [...prev, entry]);
+    const newQs = [...quarterScores, entry];
+    setQuarterScores(newQs);
     setBaselineHome(scoreHome);
     setBaselineAway(scoreAway);
     if (currentPeriod === "Q2") {
@@ -95,11 +96,13 @@ export default function LiveInput() {
     } else {
       setCurrentPeriod(nextPeriodLabel(currentPeriod));
     }
-  }, [currentPeriod, scoreHome, scoreAway, baselineHome, baselineAway]);
+    void persistGame("live", { quarterScoresOverride: newQs, silent: true });
+  }, [currentPeriod, scoreHome, scoreAway, baselineHome, baselineAway, quarterScores]);
 
   const endHalftime = useCallback(() => {
     setIsHalftime(false);
     setCurrentPeriod("Q3");
+    void persistGame("live", { silent: true });
   }, []);
 
   useEffect(() => {
@@ -218,27 +221,34 @@ export default function LiveInput() {
     );
   }, []);
 
-  const handleSave = async () => {
-    if (!opponent.trim()) { toast.error("Bitte Gegner eingeben"); return; }
+  const persistGame = async (
+    status: "live" | "completed",
+    opts: { quarterScoresOverride?: QuarterEntry[]; silent?: boolean; navigateAfter?: boolean } = {}
+  ): Promise<string | null> => {
+    if (!opponent.trim()) {
+      if (!opts.silent) toast.error("Bitte Gegner eingeben");
+      return null;
+    }
     setSaving(true);
     try {
-      // Auto-finalize current period on save if it has scoring delta
-      let finalQs = quarterScores;
-      const deltaHome = scoreHome - baselineHome;
-      const deltaAway = scoreAway - baselineAway;
-      if (deltaHome > 0 || deltaAway > 0) {
-        finalQs = [...finalQs, { label: currentPeriod, home: Math.max(0, deltaHome), away: Math.max(0, deltaAway) }];
+      let finalQs = opts.quarterScoresOverride ?? quarterScores;
+      if (status === "completed") {
+        const deltaHome = scoreHome - baselineHome;
+        const deltaAway = scoreAway - baselineAway;
+        if (deltaHome > 0 || deltaAway > 0) {
+          finalQs = [...finalQs, { label: currentPeriod, home: Math.max(0, deltaHome), away: Math.max(0, deltaAway) }];
+        }
       }
       let gId = existingGameId;
       if (gId) {
         await supabase.from("games").update({
-          date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
+          date, opponent, score_home: scoreHome, score_away: scoreAway, status,
           quarter_scores: finalQs,
         } as any).eq("id", gId);
         await supabase.from("player_stats").delete().eq("game_id", gId);
       } else {
         const { data: game, error } = await supabase.from("games").insert({
-          date, opponent, score_home: scoreHome, score_away: scoreAway, status: "completed",
+          date, opponent, score_home: scoreHome, score_away: scoreAway, status,
           quarter_scores: finalQs,
         } as any).select().single();
         if (error || !game) throw error || new Error("Game creation failed");
@@ -259,11 +269,19 @@ export default function LiveInput() {
         const { error: statsError } = await supabase.from("player_stats").insert(rows);
         if (statsError) throw statsError;
       }
-      toast.success("Spiel gespeichert!");
-      navigate(`/statistiken/spiel/${gId}`);
-    } catch (err: any) { toast.error(err.message); }
-    finally { setSaving(false); }
+      if (!opts.silent) toast.success(status === "completed" ? "Spiel gespeichert!" : "Zwischenstand gespeichert");
+      if (opts.navigateAfter) navigate(`/statistiken/spiel/${gId}`);
+      return gId;
+    } catch (err: any) {
+      if (!opts.silent) toast.error(err.message);
+      return null;
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleSave = () => persistGame("completed", { navigateAfter: true });
+  const handleSaveProgress = () => persistGame("live");
 
   const courtPlayers = stats.filter((s) => onCourt.includes(s.player_id));
   const benchPlayers = stats
@@ -346,6 +364,9 @@ export default function LiveInput() {
                 </Button>
               </>
             )}
+            <Button onClick={handleSaveProgress} disabled={saving} size="sm" variant="outline" className="h-8 text-xs">
+              Speichern
+            </Button>
             <Button onClick={handleSave} disabled={saving} size="sm" className="h-8 text-xs">
               {saving ? "..." : "Beenden"}
             </Button>
