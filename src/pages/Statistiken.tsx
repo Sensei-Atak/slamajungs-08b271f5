@@ -238,6 +238,38 @@ export default function Statistiken() {
         )}
       </div>
 
+      {/* Live (in-progress) Games - Coach only */}
+      {isCoach && liveGames.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            Laufende Spiele
+          </h2>
+          <div className="grid gap-2">
+            {liveGames.map((g) => (
+              <Card key={g.id} className="cursor-pointer border-primary/50 hover:border-primary transition-colors"
+                onClick={() => navigate(`/statistiken/live/${g.id}`)}>
+                <CardContent className="p-4 flex items-center justify-between gap-2">
+                  <div className="space-y-1 min-w-0">
+                    <div className="font-semibold truncate">
+                      {g.is_home_game ? "vs." : "@"} {g.opponent}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{formatDate(g.date)}</span>
+                      <span className="tabular-nums">{g.score_home} : {g.score_away}</span>
+                    </div>
+                  </div>
+                  <Button size="sm" className="gap-1.5 shrink-0">
+                    <Play className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Fortsetzen</span>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Scheduled Games - Coach only */}
       {isCoach && scheduledGames.length > 0 && (
         <div className="space-y-2">
