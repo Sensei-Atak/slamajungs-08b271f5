@@ -93,6 +93,7 @@ export default function Statistiken() {
 
       if (gamesRes.data) {
         setScheduledGames(gamesRes.data.filter((g) => g.status === "scheduled"));
+        setLiveGames(gamesRes.data.filter((g) => g.status === "live"));
         setCompletedGames(gamesRes.data.filter((g) => g.status === "completed"));
       }
 
