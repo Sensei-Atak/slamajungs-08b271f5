@@ -49,6 +49,7 @@ export default function Statistiken() {
   const [sortKey, setSortKey] = useState<keyof PlayerAvg>("ppg");
   const [loading, setLoading] = useState(true);
   const [scheduledGames, setScheduledGames] = useState<Game[]>([]);
+  const [liveGames, setLiveGames] = useState<Game[]>([]);
   const [completedGames, setCompletedGames] = useState<Game[]>([]);
   const [guestDialogOpen, setGuestDialogOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
