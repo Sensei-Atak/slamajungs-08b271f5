@@ -148,16 +148,14 @@ export default function GameSummary() {
                 <span className="font-medium">{r.name}</span>
                 <span className="text-lg font-bold tabular-nums">{r.pts} PTS</span>
               </div>
-              <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="grid grid-cols-3 gap-2 text-center">
                 {[
                   { label: "FW", value: `${r.fw_made}/${r.fw_attempted}` },
                   { label: "2P", value: `${r.twop_made}/${r.twop_attempted}` },
                   { label: "3P", value: `${r.threep_made}/${r.threep_attempted}` },
                   { label: "REB", value: r.reb },
-                  { label: "AST", value: r.ast },
-                  { label: "STL", value: r.stl },
-                  { label: "BLK", value: r.blk },
                   { label: "TO", value: r.to_count },
+                  { label: "F", value: r.fouls },
                 ].map((s) => (
                   <div key={s.label}>
                     <p className="text-[10px] text-muted-foreground uppercase">{s.label}</p>
