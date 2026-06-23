@@ -1,67 +1,87 @@
+# Live-Statistik Redesign – Aktions-zuerst
 
+## Ziel
+Live-Eingabe wird auf **Aktions-zuerst**-Workflow umgestellt: Coach tippt zuerst die Aktion (z. B. „2P getroffen"), dann den Spieler. Große Buttons, weniger Stats, klarere Viertel-Auswertung.
 
-## Drei neue Features: Aktivitaets-Tracking, Mahlzeit-Monatsranking & Dark Mode / Basketball-Design
+## 1. Stats-Reduktion
+Aus der Live-Eingabe **entfernt**: Assists (AST), Blocks (BLK), Steals (STL).
 
-### 1. Spieler-Aktivitaets-Tracking (nur Coach sichtbar)
+Verbleibende Stats pro Spieler:
+- **FW** getroffen / verfehlt
+- **2P** getroffen / verfehlt
+- **3P** getroffen / verfehlt
+- **Rebound (REB)**
+- **Turnover (TO)**
+- **Foul (F)**
 
-**Datenbank:**
-- Neue Tabelle `page_visits` mit `id` (uuid), `user_id` (uuid), `visited_at` (timestamptz default now())
-- Neue Tabelle `activity_sessions` mit `id` (uuid), `user_id` (uuid), `started_at` (timestamptz), `last_seen_at` (timestamptz), `duration_seconds` (integer default 0)
-- RLS: Spieler koennen nur INSERT auf eigene Eintraege, Coach kann SELECT auf alle
+DB-Spalten bleiben erhalten (alte Spiele behalten ihre Werte), nur UI versteckt sie. In `GameSummary` werden AST/BLK/STL ebenfalls ausgeblendet.
 
-**Tracking-Logik (in AppLayout, unsichtbar fuer Spieler):**
-- Bei jedem App-Start: INSERT in `page_visits` (zaehlt Besuche)
-- Heartbeat alle 30 Sekunden: erstellt/aktualisiert `activity_sessions` Eintrag, pausiert bei `visibilitychange` (Tab nicht sichtbar)
-- `duration_seconds` wird bei jedem Heartbeat hochgezaehlt
+## 2. Neues Aktions-zuerst Layout (`LiveInput.tsx`)
 
-**Coach-Ansicht (neuer Tab "Aktivitaet" in Verwaltung):**
-- Tabelle mit allen Spielern, pro Tag:
-  - Anzahl Seitenbesuche
-  - Gesamte aktive Zeit (in Minuten/Sekunden)
-  - Kombinierte Kategorie: **selten** (rot), **mittel** (gelb), **oft** (gruen)
-- Kategorisierung basiert auf kombiniertem Score aus Besuchen + aktiver Zeit
-  - selten: 0-1 Besuche UND unter 2 Minuten
-  - mittel: 2-3 Besuche ODER 2-10 Minuten
-  - oft: 4+ Besuche ODER ueber 10 Minuten
-- Tagesfilter / Kalenderansicht
+```text
+┌──────────────────────────────────────────────────────────┐
+│ Datum · Gegner · SJ 42 : 38 GG · [Q2] [Viertel-Ende]     │  Toolbar
+├──────────────────────────────────────────────────────────┤
+│  AKTION WÄHLEN                                            │
+│  ┌──────┬──────┬──────┐  ┌──────┬──────┬──────┐          │
+│  │ +1 ✓ │ +2 ✓ │ +3 ✓ │  │ FW ✗ │ 2P ✗ │ 3P ✗ │  große   │
+│  └──────┴──────┴──────┘  └──────┴──────┴──────┘  Buttons │
+│  ┌──────┬──────┬──────┐                                   │
+│  │ REB  │ TO   │ FOUL │                                   │
+│  └──────┴──────┴──────┘                                   │
+├──────────────────────────────────────────────────────────┤
+│  SPIELER ANTIPPEN  (5 Court-Spieler als große Kacheln)    │
+│  ┌────────┬────────┬────────┬────────┬────────┐           │
+│  │ #5 Max │ #7 Tim │ #9 Leo │#11 Ben │#14 Tom │           │
+│  │ 8 PTS  │ 4 PTS  │ 6 PTS  │ 0 PTS  │ 2 PTS  │           │
+│  │ [Sub]  │ [Sub]  │ [Sub]  │ [Sub]  │ [Sub]  │           │
+│  └────────┴────────┴────────┴────────┴────────┘           │
+└──────────────────────────────────────────────────────────┘
+```
 
-### 2. Mahlzeit-des-Tages Monatsranking
+**Flow:**
+1. Coach tippt Aktion (z. B. „2P ✓") → Button hebt sich farbig hervor, Hinweis „Spieler antippen für: 2P getroffen"
+2. Coach tippt Spieler → Stat wird gebucht, Kachel leuchtet kurz auf, ggf. Score-Update bei Treffern
+3. Aktion setzt sich automatisch zurück (nächste Eingabe braucht neue Aktions-Auswahl)
+4. **Rückgängig-Button** für den letzten Eintrag (Undo-Stack)
 
-**Datenbank:**
-- Neue Tabelle `monthly_meal_winners` mit `id`, `month` (text, YYYY-MM), `player_id` (uuid), `player_name` (text), `win_count` (integer)
+**Spieler-Kachel** zeigt nur Trikotnummer, Name, PTS, Sub-Button. Detail-Stats pro Spieler werden in einem optionalen „Details"-Sheet sichtbar.
 
-**Logik:**
-- Aus bestehenden `meals` + `meal_ratings` wird pro Tag der Gewinner ermittelt (hoechste Durchschnittsbewertung)
-- Pro Monat werden die Tagessiege pro Spieler gezaehlt
-- Beim ersten Laden im neuen Monat wird der Vormonatsgewinner in `monthly_meal_winners` archiviert
+## 3. Viertel-Ende: Auto-Save + Zwischenstand-Dialog
 
-**UI (Feed-Seite):**
-- Neues Segment unter "Mahlzeit des Tages": Monatsranking-Leaderboard
-- Separater "Hall of Fame"-Bereich fuer vergangene Monatsgewinner mit Pokal-Icons
-- Neue Komponenten: `MonthlyMealRanking.tsx`, `MealHallOfFame.tsx`
+Beim Klick auf **„Viertel beenden"** / „→ Halbzeit" / „OT beenden":
 
-### 3. Dark Mode & Basketball-Design
+1. **Zwischenstand-Dialog** öffnet sich mit zwei Eingabefeldern:
+   - „Stand Slama Jama" (vorbelegt mit aktuellem `scoreHome`)
+   - „Stand Gegner" (vorbelegt mit aktuellem `scoreAway`)
+   - Hinweis: „Stimmt der Spielstand? Korrigiere ihn, falls Punkte fehlen."
+2. Bei Bestätigung:
+   - Korrigierte Scores überschreiben `scoreHome` / `scoreAway`
+   - Differenz zum Baseline-Stand wird als Quarter-Eintrag gebucht (`{label, home, away}`)
+   - **Auto-Save** erfolgt automatisch
+   - Toast: „Q1 gespeichert (12 : 9)"
 
-**Dark Mode:**
-- `.dark` CSS-Variablen existieren bereits in `index.css`
-- Neuer `ThemeContext.tsx` der `dark` Klasse auf `<html>` setzt und in localStorage speichert
-- Toggle-Button (Sonne/Mond) im Sidebar-Header und Mobile-Header
+## 4. Spiel-Übersicht (`GameSummary.tsx`)
 
-**Basketball-Design:**
-- Primaerfarbe von Hellblau (hsl 199) zu kraeftigem Orange aendern (ca. hsl 25 95% 55%)
-- Dark-Mode ebenfalls auf Orange-Akzent anpassen
-- Basketball-Icon neben "Slama Jama" im Sidebar
-- Gradient-Akzente in Orange/Schwarz fuer Karten-Header
-- Sportlichere, kraeftigere Ueberschriften
+Neue Sektion **„Viertel-Auswertung"** ganz oben (falls `quarter_scores` vorhanden):
 
-### Dateien
+```text
+┌────┬────┬────┬────┬─────┬────────┐
+│    │ Q1 │ Q2 │ Q3 │ Q4  │ Gesamt │
+├────┼────┼────┼────┼─────┼────────┤
+│ SJ │ 12 │ 14 │ 10 │  8  │   44   │
+│ GG │  9 │ 11 │ 13 │ 12  │   45   │
+└────┴────┴────┴────┴─────┴────────┘
+```
 
-- **Neu:** `src/contexts/ThemeContext.tsx`, `src/components/feed/MonthlyMealRanking.tsx`, `src/components/feed/MealHallOfFame.tsx`
-- **Geaendert:** `src/index.css`, `src/components/AppLayout.tsx` (Theme-Toggle + Visit/Session-Tracking), `src/pages/Feed.tsx`, `src/pages/Verwaltung.tsx` (neuer Aktivitaet-Tab), `src/main.tsx` (ThemeProvider)
-- **Migration:** `page_visits`, `activity_sessions`, `monthly_meal_winners` Tabellen + RLS
+OTs hängen als weitere Spalten an („OT1", „OT2").
 
-### Reihenfolge
-1. Dark Mode + Basketball-Design
-2. Aktivitaets-Tracking (Besuche + Zeit)
-3. Mahlzeit-Monatsranking
+Spalten AST/BLK/STL werden aus der Spieler-Stats-Tabelle entfernt. Spalten bleiben: PTS, FW, 2P, 3P, REB, TO, F.
 
+## Technische Details
+- `src/pages/LiveInput.tsx`: Umbau auf zwei-Schritt-Workflow, neuer State `pendingAction`, `actionHistory[]` für Undo.
+- Neue Komponente `src/components/live-input/ActionBar.tsx`: große Aktions-Buttons (Treffer grün, Miss rot, neutrale Stats grau).
+- Neue Komponente `src/components/live-input/PlayerTile.tsx`: große Spieler-Kachel.
+- Neue Komponente `src/components/live-input/QuarterEndDialog.tsx`: Dialog mit zwei Number-Inputs.
+- `GameSummary.tsx`: neue Viertel-Tabelle, Stats-Spalten reduziert.
+- Keine DB-Migration nötig.
