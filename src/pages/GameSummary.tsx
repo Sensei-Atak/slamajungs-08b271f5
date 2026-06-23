@@ -180,9 +180,6 @@ export default function GameSummary() {
                 <TableHead className="text-center">2P</TableHead>
                 <TableHead className="text-center">3P</TableHead>
                 <TableHead className="text-center">REB</TableHead>
-                <TableHead className="text-center">AST</TableHead>
-                <TableHead className="text-center">BLK</TableHead>
-                <TableHead className="text-center">STL</TableHead>
                 <TableHead className="text-center">TO</TableHead>
                 <TableHead className="text-center">F</TableHead>
               </TableRow>
@@ -202,9 +199,6 @@ export default function GameSummary() {
                     {r.threep_made}/{r.threep_attempted}
                   </TableCell>
                   <TableCell className="text-center tabular-nums">{r.reb}</TableCell>
-                  <TableCell className="text-center tabular-nums">{r.ast}</TableCell>
-                  <TableCell className="text-center tabular-nums">{r.blk}</TableCell>
-                  <TableCell className="text-center tabular-nums">{r.stl}</TableCell>
                   <TableCell className="text-center tabular-nums">{r.to_count}</TableCell>
                   <TableCell className="text-center tabular-nums">{r.fouls}</TableCell>
                 </TableRow>
