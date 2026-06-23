@@ -148,16 +148,14 @@ export default function GameSummary() {
                 <span className="font-medium">{r.name}</span>
                 <span className="text-lg font-bold tabular-nums">{r.pts} PTS</span>
               </div>
-              <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="grid grid-cols-3 gap-2 text-center">
                 {[
                   { label: "FW", value: `${r.fw_made}/${r.fw_attempted}` },
                   { label: "2P", value: `${r.twop_made}/${r.twop_attempted}` },
                   { label: "3P", value: `${r.threep_made}/${r.threep_attempted}` },
                   { label: "REB", value: r.reb },
-                  { label: "AST", value: r.ast },
-                  { label: "STL", value: r.stl },
-                  { label: "BLK", value: r.blk },
                   { label: "TO", value: r.to_count },
+                  { label: "F", value: r.fouls },
                 ].map((s) => (
                   <div key={s.label}>
                     <p className="text-[10px] text-muted-foreground uppercase">{s.label}</p>
@@ -182,9 +180,6 @@ export default function GameSummary() {
                 <TableHead className="text-center">2P</TableHead>
                 <TableHead className="text-center">3P</TableHead>
                 <TableHead className="text-center">REB</TableHead>
-                <TableHead className="text-center">AST</TableHead>
-                <TableHead className="text-center">BLK</TableHead>
-                <TableHead className="text-center">STL</TableHead>
                 <TableHead className="text-center">TO</TableHead>
                 <TableHead className="text-center">F</TableHead>
               </TableRow>
@@ -204,9 +199,6 @@ export default function GameSummary() {
                     {r.threep_made}/{r.threep_attempted}
                   </TableCell>
                   <TableCell className="text-center tabular-nums">{r.reb}</TableCell>
-                  <TableCell className="text-center tabular-nums">{r.ast}</TableCell>
-                  <TableCell className="text-center tabular-nums">{r.blk}</TableCell>
-                  <TableCell className="text-center tabular-nums">{r.stl}</TableCell>
                   <TableCell className="text-center tabular-nums">{r.to_count}</TableCell>
                   <TableCell className="text-center tabular-nums">{r.fouls}</TableCell>
                 </TableRow>
