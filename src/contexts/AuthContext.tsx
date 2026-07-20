@@ -33,14 +33,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    if (data) {
-      setProfile(data as Profile);
+  const fetchProfile = async (userId: string, attempt = 0): Promise<void> => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) {
+        setProfile(data as Profile);
+        return;
+      }
+      // No row yet — the handle_new_user trigger may still be running after signup.
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        return fetchProfile(userId, attempt + 1);
+      }
+      console.warn("[Auth] Profil nicht gefunden nach mehreren Versuchen für", userId);
+    } catch (err) {
+      console.error("[Auth] Profil konnte nicht geladen werden:", err);
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+        return fetchProfile(userId, attempt + 1);
+      }
     }
   };
 
