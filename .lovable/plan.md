@@ -1,87 +1,63 @@
-# Live-Statistik Redesign – Aktions-zuerst
+# Redesign: Slama Jama als moderne Basketball-Teamplattform
 
-## Ziel
-Live-Eingabe wird auf **Aktions-zuerst**-Workflow umgestellt: Coach tippt zuerst die Aktion (z. B. „2P getroffen"), dann den Spieler. Große Buttons, weniger Stats, klarere Viertel-Auswertung.
+## Zielbild
+Die gesamte App erhält die gewählte helle, redaktionelle Gestaltung: präzise Raster, großzügiger Weißraum, starke Sport-Typografie und Orange nur als gezielter Akzent. Die Oberfläche wird für Coach und Spieler klarer priorisiert, ohne bestehende Funktionen oder Datenabläufe zu verändern.
 
-## 1. Stats-Reduktion
-Aus der Live-Eingabe **entfernt**: Assists (AST), Blocks (BLK), Steals (STL).
+## 1. Einheitliches Designsystem
+- Archivo Black für prägnante Überschriften und Hind für Fließtext, Navigation und Bedienelemente einsetzen.
+- Helle Papier-/Weißflächen, dunkle Schrift, feine Court-Linien und kontrollierte orange Akzente definieren; Dark Mode weiterhin vollständig unterstützen.
+- Radien auf 6–8 px reduzieren, Schatten fast vollständig durch feine Konturen und Flächenhierarchie ersetzen.
+- Einheitliche Seitentitel, Kennzahlen, Statusanzeigen, leere Zustände, Lade-Platzhalter und kurze 150–200-ms-Übergänge schaffen.
+- Gemeinsame Bausteine für Seitenkopf, Kennzahl, Abschnittstitel, Status und Inhaltsrahmen anlegen, damit alle Bereiche konsistent bleiben.
 
-Verbleibende Stats pro Spieler:
-- **FW** getroffen / verfehlt
-- **2P** getroffen / verfehlt
-- **3P** getroffen / verfehlt
-- **Rebound (REB)**
-- **Turnover (TO)**
-- **Foul (F)**
+## 2. Navigation und Grundlayout
+- Desktop als kompaktes linkes Navigationsband mit klar gruppierten Zielen und festem Profilbereich gestalten.
+- Mobile auf fünf Kernziele reduzieren und eine zentrale Erstellen-Aktion anbieten; weitere Bereiche kommen in ein übersichtliches Menü.
+- Bestehende Bereiche verständlich ordnen: Start, Feed, Aufgaben, Statistiken, Ranking sowie Coach-Verwaltung und Profil.
+- Benachrichtigungen, Rollenrechte, offene Passwortanfragen, Abmelden und Theme-Wechsel erhalten.
+- Inhaltsbreite je nach Aufgabe steuern: redaktionell für Feed, breit für Statistiken und fokussiert für Formulare.
 
-DB-Spalten bleiben erhalten (alte Spiele behalten ihre Werte), nur UI versteckt sie. In `GameSummary` werden AST/BLK/STL ebenfalls ausgeblendet.
+## 3. Neue priorisierte Startseite
+- Eine echte Startseite ergänzen, die vorhandene Daten bündelt: nächstes Spiel, letztes Ergebnis, laufendes Spiel, offene Aufgaben und jüngste Teamaktivität.
+- Coaches sehen zusätzlich schnelle Einstiege in Live-Statistik und Verwaltung; Spieler sehen ihre nächsten relevanten Aufgaben und Termine.
+- Keine gleichförmige Kachelwand: eine dominante Tageslage, kompakte Kennzahlen und eine schlanke Aktivitätsspur.
 
-## 2. Neues Aktions-zuerst Layout (`LiveInput.tsx`)
+## 4. Social Feed und Ranking
+- Den Feed nach der gewählten „Minimalist editorial feed“-Komposition umbauen: starke Bildbeiträge, kompakte Autorenzeile und ruhige Interaktionen.
+- Mahlzeiten, Fotos, Treffen, Spieltagsbanner, Tagesgewinner, Bewertungen, Likes, Kommentare und Löschrechte vollständig erhalten.
+- Erstellen als schnelle, mobile und desktopgerechte Aktion mit klarer Auswahl für Mahlzeit, Foto oder Treffen gestalten.
+- Ranking und Hall of Fame als visuelle Bestenliste mit Monatsfokus, Podium und dauerhaft sichtbarem Archiv neu ordnen.
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│ Datum · Gegner · SJ 42 : 38 GG · [Q2] [Viertel-Ende]     │  Toolbar
-├──────────────────────────────────────────────────────────┤
-│  AKTION WÄHLEN                                            │
-│  ┌──────┬──────┬──────┐  ┌──────┬──────┬──────┐          │
-│  │ +1 ✓ │ +2 ✓ │ +3 ✓ │  │ FW ✗ │ 2P ✗ │ 3P ✗ │  große   │
-│  └──────┴──────┴──────┘  └──────┴──────┴──────┘  Buttons │
-│  ┌──────┬──────┬──────┐                                   │
-│  │ REB  │ TO   │ FOUL │                                   │
-│  └──────┴──────┴──────┘                                   │
-├──────────────────────────────────────────────────────────┤
-│  SPIELER ANTIPPEN  (5 Court-Spieler als große Kacheln)    │
-│  ┌────────┬────────┬────────┬────────┬────────┐           │
-│  │ #5 Max │ #7 Tim │ #9 Leo │#11 Ben │#14 Tom │           │
-│  │ 8 PTS  │ 4 PTS  │ 6 PTS  │ 0 PTS  │ 2 PTS  │           │
-│  │ [Sub]  │ [Sub]  │ [Sub]  │ [Sub]  │ [Sub]  │           │
-│  └────────┴────────┴────────┴────────┴────────┘           │
-└──────────────────────────────────────────────────────────┘
-```
+## 5. Aufgaben und Kommunikation
+- Offene Aufgaben zuerst anzeigen; Status, Medienart, Fortschritt und Fristwirkung klarer hervorheben.
+- Coach-Ansicht als kompakte Fortschrittsübersicht gestalten, Spieler-Ansicht als direkte Erledigungsstrecke.
+- Video-Upload, YouTube-Wiedergabe, 90-%-Fortschritt, Links, Fotos, PDFs, Rückgängig-Funktion und Abschlussstatus beibehalten.
 
-**Flow:**
-1. Coach tippt Aktion (z. B. „2P ✓") → Button hebt sich farbig hervor, Hinweis „Spieler antippen für: 2P getroffen"
-2. Coach tippt Spieler → Stat wird gebucht, Kachel leuchtet kurz auf, ggf. Score-Update bei Treffern
-3. Aktion setzt sich automatisch zurück (nächste Eingabe braucht neue Aktions-Auswahl)
-4. **Rückgängig-Button** für den letzten Eintrag (Undo-Stack)
+## 6. Basketball-Statistiken
+- Statistikübersicht zuerst visuell lesbar machen: letzte Ergebnisse, laufende/angesetzte Spiele, zentrale Teamwerte und Spielerführer; Detailtabellen nachgelagert.
+- Spieleransichten mit großen Kernwerten, Wurfquoten, Spiel-für-Spiel-Verlauf und kompakten Vergleichen strukturieren.
+- Spielzusammenfassung mit prominentem Endstand und klarer Viertel-/Overtime-Leiste gestalten.
+- Assists, Steals und Blocks dort nicht wieder in den Vordergrund bringen, wo sie aus dem Live-Ablauf entfernt wurden; erfasste Kernwerte bleiben Punkte, Würfe, Rebounds, Turnover und Fouls.
 
-**Spieler-Kachel** zeigt nur Trikotnummer, Name, PTS, Sub-Button. Detail-Stats pro Spieler werden in einem optionalen „Details"-Sheet sichtbar.
+## 7. Live-Statistik als fokussierter Spielmodus
+- Den bestehenden Aktionen-zuerst-Ablauf beibehalten und visuell vom normalen App-Rahmen lösen.
+- Spielstand, aktuelles Viertel, Speichern, Viertelende und Spielende als stabile, groß bedienbare Kopfzone gestalten.
+- Aktionsleiste und fünf aktive Spieler für schnelle Bedienung im Querformat optimieren; Wechselbank und Korrekturen bleiben direkt erreichbar.
+- Automatisches Speichern nach Vierteln, manuelles Speichern, Wiederaufnahme laufender Spiele, Halbzeit, Overtime und Ergebnisabgleich unverändert absichern.
 
-## 3. Viertel-Ende: Auto-Save + Zwischenstand-Dialog
+## 8. Profil, Anmeldung und Coach-Verwaltung
+- Anmeldung und Registrierung als klare, markentypische Einstiegsseite neu gestalten, ohne generische Marketingfläche.
+- Profilinformationen, Avatar, Positionen, Trikotnummer und Benutzername editorial und kompakt ordnen.
+- Die umfangreiche Coach-Verwaltung in klar benannte Teilbereiche mit progressiver Offenlegung gliedern; bestehende Konto-, Spielplan-, Aktivitäts- und Passwortfunktionen erhalten.
 
-Beim Klick auf **„Viertel beenden"** / „→ Halbzeit" / „OT beenden":
+## 9. Responsive Qualität und Prüfung
+- Alle Hauptansichten auf Desktop, Tablet und Mobil prüfen; Live-Statistik zusätzlich gezielt im Querformat testen.
+- Mindestgröße von 44 px für wichtige mobile Aktionen, sichtbare Fokuszustände, ausreichende Kontraste und reduzierte Bewegung berücksichtigen.
+- Kritische Abläufe als Coach und Spieler testen: Beitrag erstellen, Aufgabe bearbeiten/abgeben, Ranking öffnen, Spiel starten/speichern/wiederaufnehmen/beenden und Profil ändern.
 
-1. **Zwischenstand-Dialog** öffnet sich mit zwei Eingabefeldern:
-   - „Stand Slama Jama" (vorbelegt mit aktuellem `scoreHome`)
-   - „Stand Gegner" (vorbelegt mit aktuellem `scoreAway`)
-   - Hinweis: „Stimmt der Spielstand? Korrigiere ihn, falls Punkte fehlen."
-2. Bei Bestätigung:
-   - Korrigierte Scores überschreiben `scoreHome` / `scoreAway`
-   - Differenz zum Baseline-Stand wird als Quarter-Eintrag gebucht (`{label, home, away}`)
-   - **Auto-Save** erfolgt automatisch
-   - Toast: „Q1 gespeichert (12 : 9)"
-
-## 4. Spiel-Übersicht (`GameSummary.tsx`)
-
-Neue Sektion **„Viertel-Auswertung"** ganz oben (falls `quarter_scores` vorhanden):
-
-```text
-┌────┬────┬────┬────┬─────┬────────┐
-│    │ Q1 │ Q2 │ Q3 │ Q4  │ Gesamt │
-├────┼────┼────┼────┼─────┼────────┤
-│ SJ │ 12 │ 14 │ 10 │  8  │   44   │
-│ GG │  9 │ 11 │ 13 │ 12  │   45   │
-└────┴────┴────┴────┴─────┴────────┘
-```
-
-OTs hängen als weitere Spalten an („OT1", „OT2").
-
-Spalten AST/BLK/STL werden aus der Spieler-Stats-Tabelle entfernt. Spalten bleiben: PTS, FW, 2P, 3P, REB, TO, F.
-
-## Technische Details
-- `src/pages/LiveInput.tsx`: Umbau auf zwei-Schritt-Workflow, neuer State `pendingAction`, `actionHistory[]` für Undo.
-- Neue Komponente `src/components/live-input/ActionBar.tsx`: große Aktions-Buttons (Treffer grün, Miss rot, neutrale Stats grau).
-- Neue Komponente `src/components/live-input/PlayerTile.tsx`: große Spieler-Kachel.
-- Neue Komponente `src/components/live-input/QuarterEndDialog.tsx`: Dialog mit zwei Number-Inputs.
-- `GameSummary.tsx`: neue Viertel-Tabelle, Stats-Spalten reduziert.
-- Keine DB-Migration nötig.
+## Technische Umsetzung
+- Bestehende React-, Routing- und Lovable-Cloud-Datenlogik weiterverwenden; keine neue Datenbankstruktur ist für das Redesign vorgesehen.
+- Seiten in kleinere Darstellungsbausteine zerlegen, ohne Abfragen oder Rollenprüfungen unnötig umzubauen.
+- Recharts nur für sinnvolle Statistikvisualisierungen einsetzen; Tabellen bleiben als vertiefende Ebene verfügbar.
+- Semantische Farb-, Typografie-, Schatten- und Abstandswerte zentral definieren und bestehende UI-Bausteine darauf abstimmen.
+- Umsetzung in Etappen: Grundlayout und Designsystem, Start/Feed, Aufgaben/Ranking, Statistiken/Live-Spiel, Profil/Verwaltung/Login, abschließende Geräte- und Rollenprüfung.
